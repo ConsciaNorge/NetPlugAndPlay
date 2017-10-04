@@ -12,8 +12,12 @@ namespace NetPlugAndPlay
 {
     public class Program
     {
+        static Services.TFTP_Server.Server tftpServer;
+
         public static void Main(string[] args)
         {
+            tftpServer = new Services.TFTP_Server.Server();
+
             BuildWebHost(args).Run();
         }
 

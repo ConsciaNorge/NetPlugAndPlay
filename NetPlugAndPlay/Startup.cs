@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SpaServices.Webpack;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NetPlugAndPlay.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace NetPlugAndPlay
 {
@@ -17,12 +19,15 @@ namespace NetPlugAndPlay
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
+        static public IConfiguration Configuration { get; set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+
+            services.AddDbContext<PnPServerContext>(options =>
+                            options.UseSqlServer(Configuration.GetValue<string>("Data:DefaultConnection:ConnectionString")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

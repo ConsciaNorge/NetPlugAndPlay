@@ -5,6 +5,15 @@ VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetPlugAndPlay", "NetPlugAndPlay\NetPlugAndPlay.csproj", "{AECC66DE-B3DA-4D5E-B1B4-EEAB6F59CCEF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NVelocity", "NVelocity\NVelocity.csproj", "{189D11A0-72F8-4FCC-9510-36B8EE39D434}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tftp.Net", "Tftp.Net\Tftp.Net.csproj", "{E243002C-9B36-448A-A77F-B3639093B8D0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{90554281-0E2C-466F-A969-FB1122ADA233}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +24,14 @@ Global
 		{AECC66DE-B3DA-4D5E-B1B4-EEAB6F59CCEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AECC66DE-B3DA-4D5E-B1B4-EEAB6F59CCEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AECC66DE-B3DA-4D5E-B1B4-EEAB6F59CCEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{189D11A0-72F8-4FCC-9510-36B8EE39D434}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{189D11A0-72F8-4FCC-9510-36B8EE39D434}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{189D11A0-72F8-4FCC-9510-36B8EE39D434}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{189D11A0-72F8-4FCC-9510-36B8EE39D434}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E243002C-9B36-448A-A77F-B3639093B8D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E243002C-9B36-448A-A77F-B3639093B8D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E243002C-9B36-448A-A77F-B3639093B8D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E243002C-9B36-448A-A77F-B3639093B8D0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

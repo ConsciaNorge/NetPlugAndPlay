@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,6 +20,27 @@
   <ItemGroup>
     <!-- Files not to publish (note that the 'dist' subfolders are re-added below) -->
     <Content Remove="ClientApp\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="ClientApp\app\components\networkdevices\networkdevices.component.ts" />
+    <None Remove="ClientApp\app\model\networkdevice.ts" />
+    <None Remove="ClientApp\app\model\networkdevicelink.ts" />
+    <None Remove="ClientApp\app\model\networkdevicetype.ts" />
+    <None Remove="ClientApp\app\model\networkinterface.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NVelocity\NVelocity.csproj" />
+    <ProjectReference Include="..\Tftp.Net\Tftp.Net.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TypeScriptCompile Include="ClientApp\app\components\networkdevices\networkdevices.component.ts" />
+    <TypeScriptCompile Include="ClientApp\app\model\networkdevice.ts" />
+    <TypeScriptCompile Include="ClientApp\app\model\networkdevicelink.ts" />
+    <TypeScriptCompile Include="ClientApp\app\model\networkdevicetype.ts" />
+    <TypeScriptCompile Include="ClientApp\app\model\networkinterface.ts" />
   </ItemGroup>
 
   <Target Name="DebugRunWebpack" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('wwwroot\dist') ">
