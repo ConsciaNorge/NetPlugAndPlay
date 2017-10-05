@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NetPlugAndPlay.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -19,6 +20,12 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
                 [FromServices] PnPServerContext dbContext
             )
         {
+            StringValues names;
+            if(Request.Query.TryGetValue("name", out names))
+            {
+                return await dbContext.Templates.Where(x => names.Contains(x.Name)).ToListAsync();
+            }
+
             return await dbContext.Templates.ToListAsync();
         }
 
@@ -90,7 +97,7 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
             dbContext.Templates.Update(existingRecord);
             await dbContext.SaveChangesAsync();
 
-            return new NoContentResult();
+            return new ObjectResult(existingRecord);
         }
 
         // DELETE api/values/5

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NetPlugAndPlay.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -19,6 +20,16 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
                 [FromServices] PnPServerContext dbContext
             )
         {
+            var hostname = Request.Query["hostname"];
+            var domainName = Request.Query["domainName"];
+
+            if (!string.IsNullOrEmpty(hostname) && !string.IsNullOrEmpty(domainName))
+                return await dbContext.NetworkDevices.Where(x => x.Hostname == hostname && x.DomainName == domainName).Include("DeviceType").ToListAsync();
+            else if (!string.IsNullOrEmpty(hostname))
+                return await dbContext.NetworkDevices.Where(x => x.Hostname == hostname).Include("DeviceType").ToListAsync();
+            else if (!string.IsNullOrEmpty(domainName))
+                return await dbContext.NetworkDevices.Where(x => x.DomainName == domainName).Include("DeviceType").ToListAsync();
+
             return await dbContext.NetworkDevices.Include("DeviceType").ToListAsync();
         }
 
@@ -81,6 +92,39 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
             return new CreatedAtRouteResult("GetNetworkDevice", new { id = networkDevice.Id }, networkDevice);
         }
 
+        // PUT api/values/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(
+                [FromServices] PnPServerContext dbContext,
+                Guid id,
+                [FromBody] NetworkDevice networkDevice
+            )
+        {
+            var item = await dbContext.NetworkDevices.Where(x => x.Id == id).Include("DeviceType").FirstOrDefaultAsync();
+            if (item == null)
+                return NotFound();
+
+            item.Hostname = networkDevice.Hostname;
+            item.DomainName = networkDevice.DomainName;
+
+            if (item.DeviceType.Id != networkDevice.DeviceType.Id)
+            {
+                System.Diagnostics.Debug.WriteLine("TODO: If device type changes, force removal of all links if the new device doesn't have the same links as the old.");
+                var deviceType = await dbContext.NetworkDeviceTypes.Where(x => x.Id == networkDevice.DeviceType.Id).FirstOrDefaultAsync();
+                if (deviceType == null)
+                    return NotFound();      // TODO : Better error for device type not found
+
+                item.DeviceType = deviceType;
+            }
+            item.Description = networkDevice.Description;
+            item.IPAddress = networkDevice.IPAddress;
+
+            dbContext.NetworkDevices.Update(item);
+            await dbContext.SaveChangesAsync();
+
+            return new ObjectResult(item);
+        }
+
         // DELETE api/values/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(
@@ -111,6 +155,30 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
             var config = await Services.ConfigurationGenerator.Generator.Generate(item.IPAddress, dbContext);
 
             return new ObjectResult(new { text = config });
+        }
+
+        [HttpGet("{id}/template")]
+        public async Task<IActionResult> GetTemplateConfiguration(
+                [FromServices] PnPServerContext dbContext,
+                Guid id
+            )
+        {
+            var templateConfigurations = await dbContext.TemplateConfigurations
+                .Include("Template")
+                .Include("NetworkDevice")
+                .Include("Properties")
+                .Where(x => x.NetworkDevice.Id == id)
+                .ToListAsync();
+
+            foreach(var config in templateConfigurations)
+            {
+                foreach(var templateProperty in config.Properties)
+                {
+                    templateProperty.TemplateConfiguration = null;
+                }
+            }
+
+            return new ObjectResult(templateConfigurations);
         }
     }
 }

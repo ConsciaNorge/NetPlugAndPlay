@@ -17,6 +17,10 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
                 [FromServices] PnPServerContext dbContext
             )
         {
+            var name = Request.Query["name"];
+            if(!string.IsNullOrEmpty(name))
+                return await dbContext.NetworkDeviceTypes.Where(x => x.Name == name).ToListAsync();
+
             return await dbContext.NetworkDeviceTypes.ToListAsync();
         }
 
