@@ -1,10 +1,24 @@
-﻿<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <title></title>
-</head>
-<body>
+﻿<h1>Network Device Types</h1>
 
-</body>
-</html>
+<!--<p>This component demonstrates fetching data from the server.</p>-->
+
+<p *ngIf="!networkDeviceTypes"><em>Loading...</em></p>
+
+<table class='table' *ngIf="networkDeviceTypes">
+    <thead>
+        <tr>
+            <th>Hostname</th>
+            <th>Domain name</th>
+            <th>IP Address</th>
+            <th>Device type</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let networkDeviceType of networkDeviceTypes">
+            <td>{{ networkDeviceType.hostname}}</td>
+            <td>{{ networkDeviceType.domainName}}</td>
+            <td>{{ networkDeviceType.ipAddress}}</td>
+            <td>{{ networkDeviceType.deviceType.name}}</td>
+        </tr>
+    </tbody>
+</table>

@@ -1,10 +1,10 @@
-﻿<h1>Network Device Types</h1>
+﻿<h1>Network Devices</h1>
 
 <!--<p>This component demonstrates fetching data from the server.</p>-->
 
-<p *ngIf="!forecasts"><em>Loading...</em></p>
+<p *ngIf="!networkDevices"><em>Loading...</em></p>
 
-<table class='table' *ngIf="networkDeviceTypes">
+<table class='table' *ngIf="networkDevices">
     <thead>
         <tr>
             <th>Hostname</th>
@@ -14,11 +14,11 @@
         </tr>
     </thead>
     <tbody>
-        <tr *ngFor="let networkDeviceType of networkDeviceTypes">
-            <td>{{ networkDeviceType.hostname}}</td>
-            <td>{{ networkDeviceType.domainName}}</td>
-            <td>{{ networkDeviceType.ipAddress}}</td>
-            <td>{{ networkDeviceType.deviceType.name}}</td>
+        <tr *ngFor="let networkDevice of networkDevices">
+            <td>{{ networkDevice.hostname}}</td>
+            <td>{{ networkDevice.domainName}}</td>
+            <td>{{ networkDevice.ipAddress}}</td>
+            <td>{{ networkDevice.deviceType.name}}</td>
         </tr>
     </tbody>
 </table>

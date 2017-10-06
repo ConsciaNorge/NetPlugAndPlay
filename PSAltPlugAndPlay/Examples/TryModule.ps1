@@ -142,6 +142,55 @@ Function Invoke-PnPProcessTemplatesSection {
     })
 }
 
+Function Get-ChangedTemplateParameters {
+    Param(
+        [Parameter(Mandatory)]
+        #[AllowNullAttribute()]
+        [PSCustomObject[]]$OldParameters,
+
+        [Parameter(Mandatory)]
+        #[AllowNullAttribute()]
+        [PSCustomObject[]]$NewParameters
+    )
+
+    $result = [PSCustomObject]@{
+        removed = [PSCustomObject[]]@()
+        changed = [PSCustomObject[]]@()
+        added = [PSCustomObject[]]@()
+    }
+
+    foreach($oldParam in $OldParameters) {
+        $newParam = $NewParameters | Where-Object { $_.name -eq $oldParam.name }
+        if($null -eq $newParam) {
+            $result.removed += $oldParam
+        } else {
+            if($oldParam.value -ne $newParam.value) {
+                $result.changed += [PSCustomObject]@{
+                    id = $oldParam.id
+                    name = $oldParam.name
+                    oldValue = $oldParam.value
+                    newValue = $newParam.value
+                }
+            }
+        }
+    }
+
+    foreach($newParam in $NewParameters) {
+        $oldParam = $OldParameters | Where-Object { $_.name -eq $newParam.name }
+        if($null -eq $oldParam) {
+            $result.added += $newParam
+        }
+    }
+
+    if(
+        ($result.added.Count -eq 0) -and
+        ($result.changed.Count -eq 0) -and
+        ($result.removed.Count -eq 0)) {
+        return $null
+    }
+
+    return $result
+}
 
 Function Invoke-ProcessPnPDevice {
     Param(
@@ -356,7 +405,27 @@ Function Invoke-ProcessPnPDevice {
             )
         }
 
-        # Start here : Compare old and new parameters
+        Write-Verbose -Message (
+            'There have been changes detected to the template, making changes now'
+        )
+
+        # TODO : You idiot!!! Did you forget to change the template?
+
+        $parameterChanges = Get-ChangedTemplateParameters -OldParameters $deviceTemplates.properties -NewParameters $DeviceConfig.template.parameters
+
+        if($null -eq $parameterChanges) {
+            Write-Debug -Message (
+                'There have been no changes to the template parameters'
+            )
+        } else {
+            Write-Debug -Message 'Removing template parameters'
+            foreach($removedItem in $result.removed) {
+                Write-Debug -Message (
+                    'Removing template parameter : ' + $removedItem.name
+                )
+            }
+            #Remove-PnP
+        }
     }
 }
 
@@ -375,6 +444,7 @@ Function Invoke-PnPProcessDevicesSection {
 }
 
 
-$testConfig = Get-PnPConfigurationFile -Path .\SampleData\NavDemoStructured.config
-Invoke-PnPProcessTemplatesSection -Config $testConfig -ConfigPath '.\SampleData\NavDemoStructured.config' -Force
+$configFile = Join-Path -Path $PSScriptRoot -ChildPath '.\SampleData\NavDemoStructured.config' -Resolve
+$testConfig = Get-PnPConfigurationFile -Path $configFile
+Invoke-PnPProcessTemplatesSection -Config $testConfig -ConfigPath $configFile -Force
 Invoke-PnPProcessDevicesSection -Config $testConfig -Force -Verbose

@@ -64,3 +64,76 @@ Function Get-PnPNetworkDeviceTemplateParameters {
 
     return $result
 }
+
+Function Remove-PnPNetworkDeviceTemplateParameter {
+    Param(
+        [Parameter()]
+        [string] $PnPHost = 'localhost',        
+
+        [Parameter()]
+        [int] $HostPort = 27599,
+
+        [Parameter()]
+        [Guid]$TemplateId = [Guid]::Empty,
+
+        [Parameter()]
+        [string]$TemplateName,
+
+        [Parameter()]
+        [string]$ParameterName,
+
+        [Parameter()]
+        [Guid]$ParameterId = [Guid]::Empty
+    )
+
+    Begin {
+        if($TemplateId -eq [Guid]::Empty) {
+            if([string]::IsNullOrEmpty($TemplateName)) {
+                throw [System.ArgumentException]::new(
+                    'Either TemplateId or TemplateName must be specified',
+                    'TemplateId'
+                )
+            }
+            $template = Get-PnPTemplate -Name $TemplateName
+            if($null -eq $template) {
+                throw [System.ArgumentException]::new(
+                    'Template ' + $TemplateName + ' could not be found.',
+                    'TemplateName'
+                )
+            }
+            $TemplateId = $template.id
+        }
+
+        if($ParameterId -eq [Guid]::Empty) {
+            if([string]::IsNullOrEmpty($ParameterName)) {
+                throw [System.ArgumentException]::new(
+                    'Either ParameterId or ParameterName must be specified',
+                    'ParameterId'
+                )
+            }
+            $parameter = Get-PnPTemplateParameter -name $ParameterName
+            if($null -eq $parameter) {
+                throw [System.ArgumentException]::new(
+                    'Parameter ' + $ParameterName + ' could not be found',
+                    $ParameterName
+                )
+            }
+            $ParameterId = $parameter.id
+        }
+    }
+
+    Process {
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/' + $pnpTemplate.id + '/configuration/' + $templateConfiguration.id + '/property')
+
+        $requestSplat = @{
+            UseBasicParsing = $true
+            Uri = $uri
+            Method = 'Get'
+            ContentType = 'application/json'
+        }
+
+        $result = Invoke-RestMethod @requestSplat
+
+        return $result
+    }
+}
