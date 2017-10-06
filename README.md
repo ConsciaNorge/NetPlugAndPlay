@@ -14,9 +14,6 @@ an MIT license or Apache license. At the time of this writing, we still have yet
 license compatibility with licenses of code used from other projects. Let's for the time being assume the license 
 is "buyer beware".
 
-## Current state
-As of this time, the code is in early development and is being targetted at a specific customer.
-
 ### Platform
 .NET Core 2.0 was chosen for this project which in some cases makes perfect sense and in other cases can be illogical.
 As .NET Core 2 is so new the paper it's printed on is still warm, developing for the platform can be quite complex.
@@ -38,5 +35,8 @@ The project currently depends on [Valks tftp.net library](https://github.com/Val
 This project seems to be a fairly well written TFTP server that doesn't require direct filesystem support and although it 
 doesn't operate using the .NET async pattern, is quite versatile and scalable in my testing.
 
-### Architecture
-The current architecture is
+## Current state
+As of this time, the code is in early development and is being targetted at a specific customer.
+
+### Tags
+* v0.1.0 - Pre-alpha, still missing core functionality. Being created to verify the customer can get the files installed
