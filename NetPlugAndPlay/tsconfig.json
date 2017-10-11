@@ -13,5 +13,9 @@
     "types": [ "webpack-env" ]
   },
   "exclude": [ "bin", "node_modules" ],
-  "atom": { "rewriteTsconfig": false }
+  "atom": { "rewriteTsconfig": false },
+  "angularCompilerOptions": {
+    "genDir": "./",
+    "skipMetadataEmit": true
+  }
 }
