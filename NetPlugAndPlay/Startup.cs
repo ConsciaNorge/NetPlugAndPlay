@@ -58,6 +58,8 @@ namespace NetPlugAndPlay
                     name: "spa-fallback",
                     defaults: new { controller = "Home", action = "Index" });
             });
+
+            SampleData.InitializeDatabaseAsync(app.ApplicationServices).Wait();
         }
     }
 }
