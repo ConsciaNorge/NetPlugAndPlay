@@ -7,8 +7,6 @@ import { RouterModule } from '@angular/router';
 import { AppComponent } from './components/app/app.component';
 import { NavMenuComponent } from './components/navmenu/navmenu.component';
 import { HomeComponent } from './components/home/home.component';
-import { FetchDataComponent } from './components/fetchdata/fetchdata.component';
-import { CounterComponent } from './components/counter/counter.component';
 import { NetworkDevicesComponent } from './components/networkdevices/networkdevices.component';
 import { NetworkDeviceTypesComponent } from './components/networkdevicetypes/networkdevicetypes.component';
 
@@ -16,8 +14,6 @@ import { NetworkDeviceTypesComponent } from './components/networkdevicetypes/net
     declarations: [
         AppComponent,
         NavMenuComponent,
-        CounterComponent,
-        FetchDataComponent,
         HomeComponent,
         NetworkDevicesComponent,
         NetworkDeviceTypesComponent
@@ -29,8 +25,6 @@ import { NetworkDeviceTypesComponent } from './components/networkdevicetypes/net
         RouterModule.forRoot([
             { path: '', redirectTo: 'home', pathMatch: 'full' },
             { path: 'home', component: HomeComponent },
-            { path: 'counter', component: CounterComponent },
-            { path: 'fetch-data', component: FetchDataComponent },
             { path: 'networkdevices', component: NetworkDevicesComponent },
             { path: 'networkdevicetypes', component: NetworkDeviceTypesComponent },
             { path: '**', redirectTo: 'home' }

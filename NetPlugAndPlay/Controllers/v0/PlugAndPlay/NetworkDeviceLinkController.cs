@@ -23,7 +23,15 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
                 .Where(x =>
                     x.NetworkDevice.Id == networkDeviceId
                 )
+                .Include("NetworkDevice")
+                .Include("ConnectedToDevice")
                 .ToListAsync();
+
+            foreach(var device in result)
+            {
+                device.NetworkDevice.Uplinks = null;
+                device.ConnectedToDevice.Uplinks = null;
+            }
 
             return result;
         }

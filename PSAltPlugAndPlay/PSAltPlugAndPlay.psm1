@@ -16,3 +16,10 @@
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Sources/NetPlugAndPlay/TemplateConfiguration.ps1')
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Sources/NetPlugAndPlay/TemplateProperty.ps1')
 
+. (Join-Path -Path $PSScriptRoot -ChildPath 'Sources/ConfigTool/Get-ChangedTemplateParameters.ps1')
+. (Join-Path -Path $PSScriptRoot -ChildPath 'Sources/ConfigTool/Invoke-PnPProcessConnection.ps1')
+. (Join-Path -Path $PSScriptRoot -ChildPath 'Sources/ConfigTool/Invoke-PnPProcessConnections.ps1')
+. (Join-Path -Path $PSScriptRoot -ChildPath 'Sources/ConfigTool/Invoke-PnPProcessDevicesSection.ps1')
+. (Join-Path -Path $PSScriptRoot -ChildPath 'Sources/ConfigTool/Invoke-PnPProcessTemplatesSection.ps1')
+. (Join-Path -Path $PSScriptRoot -ChildPath 'Sources/ConfigTool/Invoke-ProcessPnPDevice.ps1')
+. (Join-Path -Path $PSScriptRoot -ChildPath 'Sources/ConfigTool/Set-PnPProcessTemplate.ps1')

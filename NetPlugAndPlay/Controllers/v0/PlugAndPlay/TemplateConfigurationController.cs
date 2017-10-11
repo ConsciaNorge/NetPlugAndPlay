@@ -8,11 +8,10 @@ using System.Threading.Tasks;
 
 namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
 {
-    [Route("api/v0/PlugAndPlay/template/{templateId}/configuration")]
     public class TemplateConfigurationController : Controller
     {
         // GET: api/values
-        [HttpGet]
+        [HttpGet("api/v0/PlugAndPlay/template/{templateId}/configuration")]
         public async Task<List<TemplateConfiguration>> Get(
                 [FromServices] PnPServerContext dbContext,
                 Guid templateId
@@ -35,7 +34,7 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
         }
 
         // GET api/values/5
-        [HttpGet("{id}", Name = "GetTemplateConfiguration")]
+        [HttpGet("api/v0/PlugAndPlay/template/{templateId}/configuration{id}", Name = "GetTemplateConfiguration")]
         public async Task<IActionResult> Get(
                 [FromServices] PnPServerContext dbContext,
                 Guid templateId,
@@ -53,6 +52,48 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
             return new ObjectResult(item);
         }
 
+        [HttpGet("api/v0/PlugAndPlay/template/configuration/{id}")]
+        public async Task<IActionResult> GetById(
+                [FromServices] PnPServerContext dbContext,
+                Guid id
+            )
+        {
+            var item = await dbContext.TemplateConfigurations
+                .Where(x => x.Id == id)
+                .FirstOrDefaultAsync();
+            if (item == null)
+            {
+                return NotFound();
+            }
+
+            return new ObjectResult(item);
+        }
+
+        [HttpPut("api/v0/PlugAndPlay/template/configuration/{id}")]
+        public async Task<IActionResult> PutById(
+                [FromServices] PnPServerContext dbContext,
+                Guid id,
+                [FromBody] TemplateConfiguration templateConfiguration
+            )
+        {
+            var item = await dbContext.TemplateConfigurations
+                .Where(x => x.Id == id)
+                .FirstOrDefaultAsync();
+            if (item == null)
+            {
+                return NotFound();
+            }
+
+            // TODO : Consider supporting more than just description on put (properties)
+            item.Description = templateConfiguration.Description;
+
+            dbContext.TemplateConfigurations.Update(item);
+            await dbContext.SaveChangesAsync();
+
+            return new ObjectResult(item);
+        }
+
+        [HttpPost("api/v0/PlugAndPlay/template/{templateId}/configuration")]
         public async Task<IActionResult> Post(
                 [FromServices] PnPServerContext dbContext,
                 Guid templateId,
@@ -105,17 +146,24 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
         }
 
         // DELETE api/values/5
-        [HttpDelete("{id}")]
+        [HttpDelete("api/v0/PlugAndPlay/template/{templateId}/configuration/{id}")]
         public async Task<IActionResult> Delete(
                 [FromServices] PnPServerContext dbContext,
                 Guid templateId,
                 Guid id
             )
         {
-            var item = await dbContext.TemplateConfigurations.FirstOrDefaultAsync(x => x.Id == id);
+            var item = await dbContext.TemplateConfigurations.Include("Properties").FirstOrDefaultAsync(x => x.Id == id);
             if (item == null)
                 return NotFound();
 
+            dbContext.TemplateProperties.RemoveRange(item.Properties);
+            //foreach (var prop in item.Properties)
+            //    dbContext.TemplateProperties.Remove(prop);
+
+            await dbContext.SaveChangesAsync();
+
+            item.Properties.Clear();
             dbContext.TemplateConfigurations.Remove(item);
             await dbContext.SaveChangesAsync();
 

@@ -73,57 +73,40 @@ Function Remove-PnPNetworkDeviceTemplateParameter {
         [Parameter()]
         [int] $HostPort = 27599,
 
-        [Parameter()]
-        [Guid]$TemplateId = [Guid]::Empty,
-
-        [Parameter()]
-        [string]$TemplateName,
-
-        [Parameter()]
-        [string]$ParameterName,
-
-        [Parameter()]
-        [Guid]$ParameterId = [Guid]::Empty
+        [Parameter(Mandatory)]
+        [Guid]$ParameterId
     )
 
-    Begin {
-        if($TemplateId -eq [Guid]::Empty) {
-            if([string]::IsNullOrEmpty($TemplateName)) {
-                throw [System.ArgumentException]::new(
-                    'Either TemplateId or TemplateName must be specified',
-                    'TemplateId'
-                )
-            }
-            $template = Get-PnPTemplate -Name $TemplateName
-            if($null -eq $template) {
-                throw [System.ArgumentException]::new(
-                    'Template ' + $TemplateName + ' could not be found.',
-                    'TemplateName'
-                )
-            }
-            $TemplateId = $template.id
+    Process {
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/property/' + $ParameterId)
+
+        $requestSplat = @{
+            UseBasicParsing = $true
+            Uri = $uri
+            Method = 'Delete'
+            ContentType = 'application/json'
         }
 
-        if($ParameterId -eq [Guid]::Empty) {
-            if([string]::IsNullOrEmpty($ParameterName)) {
-                throw [System.ArgumentException]::new(
-                    'Either ParameterId or ParameterName must be specified',
-                    'ParameterId'
-                )
-            }
-            $parameter = Get-PnPTemplateParameter -name $ParameterName
-            if($null -eq $parameter) {
-                throw [System.ArgumentException]::new(
-                    'Parameter ' + $ParameterName + ' could not be found',
-                    $ParameterName
-                )
-            }
-            $ParameterId = $parameter.id
-        }
+        $result = Invoke-RestMethod @requestSplat
+
+        return $result
     }
+}
+
+Function Get-PnPNetworkDeviceTemplateParameterById {
+    Param(
+        [Parameter()]
+        [string] $PnPHost = 'localhost',        
+
+        [Parameter()]
+        [int] $HostPort = 27599,
+
+        [Parameter(Mandatory)]
+        [Guid]$ParameterId
+    )
 
     Process {
-        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/' + $pnpTemplate.id + '/configuration/' + $templateConfiguration.id + '/property')
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/property/' + $ParameterId)
 
         $requestSplat = @{
             UseBasicParsing = $true
@@ -136,4 +119,106 @@ Function Remove-PnPNetworkDeviceTemplateParameter {
 
         return $result
     }
+}
+
+Function Set-PnPNetworkDeviceTemplateParameter {
+    Param(
+        [Parameter()]
+        [string] $PnPHost = 'localhost',
+
+        [Parameter()]
+        [int] $HostPort = 27599,
+
+        [Parameter(Mandatory)]
+        [Guid]$ParameterId,
+
+        [Parameter()]
+        [AllowEmptyString()]
+        [string]$Name,
+
+        [Parameter()]
+        [AllowEmptyString()]
+        [string]$Value
+    )
+
+    Begin {
+        if(-not ($PSBoundParameters.Name -or $PSBoundParameters.Value)) {
+            throw [System.ArgumentException]::new(
+                'Either Name or Value must be specified',
+                'Value'
+            )
+        }
+    }
+
+    Process {
+        $existingValue = Get-PnPNetworkDeviceTemplateParameterById -PnPHost $PnPHost -HostPort $HostPort -ParameterId $ParameterId
+        if(($null -eq $existingValue) -or $existingValue.id -ne $ParameterId) {
+            throw [System.ArgumentException]::new(
+                'Invalid template parameter value specified : ' + $ParameterId,
+                'ParameterId'
+            )
+        }
+
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/property/' + $ParameterId)
+
+        if($PSBoundParameters.Name) {
+            $existingValue.name = $Name
+        }
+        if($PSBoundParameters.Value) {
+            $existingValue.value = $Value
+        }
+
+        $requestSplat = @{
+            UseBasicParsing = $true
+            Uri = $uri
+            Method = 'Put'
+            ContentType = 'application/json'
+            Body = ($existingValue | ConvertTo-Json)
+        }
+
+        $result = Invoke-RestMethod @requestSplat
+
+        return $result
+    }
+}
+
+Function New-PnPNetworkDeviceTemplateParameter {
+    Param(
+        [Parameter()]
+        [string] $PnPHost = 'localhost',
+
+        [Parameter()]
+        [int] $HostPort = 27599,
+
+        [Parameter(Mandatory)]
+        [Guid]$ConfigurationId,
+
+        [Parameter(Mandatory)]
+        [string]$Name,
+
+        [Parameter(Mandatory)]
+        [string]$Value
+    )
+
+    Process {
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/configuration/' + $ConfigurationId + '/property')
+
+        $request = @{
+            name = $Name
+            value = $Value
+        }
+
+        $requestSplat = @{
+            UseBasicParsing = $true
+            Uri = $uri
+            Method = 'Post'
+            ContentType = 'application/json'
+            Body = ($request | ConvertTo-Json)
+        }
+
+        $result = Invoke-RestMethod @requestSplat
+
+        return $result
+    }
+
 }

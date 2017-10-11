@@ -32,8 +32,16 @@
     <Folder Include="Examples\SampleData\" />
     <Folder Include="Examples\SampleData\Templates\" />
     <Folder Include="Sources\NetPlugAndPlay\" />
+    <Folder Include="Sources\ConfigTool\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Sources\ConfigTool\Get-ChangedTemplateParameters.ps1" />
+    <Compile Include="Sources\ConfigTool\Invoke-PnPProcessConnection.ps1" />
+    <Compile Include="Sources\ConfigTool\Invoke-PnPProcessConnections.ps1" />
+    <Compile Include="Sources\ConfigTool\Invoke-PnPProcessDevicesSection.ps1" />
+    <Compile Include="Sources\ConfigTool\Invoke-PnPProcessTemplatesSection.ps1" />
+    <Compile Include="Sources\ConfigTool\Invoke-ProcessPnPDevice.ps1" />
+    <Compile Include="Sources\ConfigTool\Set-PnPProcessTemplate.ps1" />
     <Compile Include="Sources\HelperScripts\Get-IPAddressFromNetworkPrefix.ps1" />
     <Compile Include="Sources\HelperScripts\Get-NetworkPrefixParts.ps1" />
     <Compile Include="Sources\HelperScripts\Get-SubnetMaskFromNetworkPrefix.ps1" />
