@@ -40,3 +40,4 @@ As of this time, the code is in early development and is being targetted at a sp
 
 ### Tags
 * v0.1.0 - Pre-alpha, still missing core functionality. Being created to verify the customer can get the files installed
+* v0.2.0 - Pre-alpha, adding core functionality. Basic configuration stuff is started (and kinda working). Trying on customer's system
