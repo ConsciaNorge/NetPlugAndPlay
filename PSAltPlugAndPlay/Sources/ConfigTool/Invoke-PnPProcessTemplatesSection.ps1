@@ -24,6 +24,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #>
 Function Invoke-PnPProcessTemplatesSection {
     Param(
+        [Parameter()]
+        [string] $PnPHost = 'localhost',
+
+        [Parameter()]
+        [int] $HostPort = 80,
+        
         [Parameter(Mandatory)]
         [PSObject]$Config,
 
@@ -33,6 +39,11 @@ Function Invoke-PnPProcessTemplatesSection {
         [Parameter()]
         [switch]$Force
     )
+
+    $hostParams = @{
+        PnPHost = $PnPHost
+        HostPort = $HostPort
+    }
 
     $absoluteConfigPath = $ConfigPath
     if(-not [System.IO.Path]::IsPathRooted($absoluteConfigPath)) {
@@ -63,6 +74,6 @@ Function Invoke-PnPProcessTemplatesSection {
         }
 
         # TODO : Better error handling
-        Set-PnPProcessTemplate -Name $_.Name -Path $templatePath -Force:$Force
+        Set-PnPProcessTemplate @hostParams -Name $_.Name -Path $templatePath -Force:$Force
     })
 }

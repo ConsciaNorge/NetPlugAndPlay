@@ -24,7 +24,7 @@ Function Get-PnPTemplate {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter()]
         [Guid] $Id = [Guid]::Empty,
@@ -33,7 +33,7 @@ Function Get-PnPTemplate {
         [string]$Name
     )
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template')
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/template')
 
     if($Id -ne [Guid]::Empty) {
         $uri += ('/' + $Id.ToString())
@@ -59,7 +59,7 @@ Function Add-PnPTemplate {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [string] $Name,
@@ -84,7 +84,7 @@ Function Add-PnPTemplate {
         content = $Content
     }
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template')
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/template')
 
     $requestSplat = @{
         UseBasicParsing = $true
@@ -105,7 +105,7 @@ Function Set-PnPTemplate {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [Guid]$Id,
@@ -133,7 +133,7 @@ Function Set-PnPTemplate {
             content = $Content
         }
 
-        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/' + $Id)
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/template/' + $Id)
 
         $requestSplat = @{
             UseBasicParsing = $true

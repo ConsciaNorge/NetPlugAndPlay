@@ -24,7 +24,7 @@ Function Get-PnPNetworkDeviceType {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
         
         [Parameter()]
         [Guid] $Id = [Guid]::Empty,
@@ -33,7 +33,7 @@ Function Get-PnPNetworkDeviceType {
         [string] $Name
     )
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/networkdevicetype')
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevicetype')
 
     if($Id -ne [Guid]::Empty) {
         $uri += ('/' + $Id.ToString())
@@ -61,7 +61,7 @@ Function Add-PnPNetworkDeviceType {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [string] $Name,
@@ -79,7 +79,7 @@ Function Add-PnPNetworkDeviceType {
         productId = $ProductId
     }
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/networkdevicetype')
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevicetype')
 
     $requestSplat = @{
         UseBasicParsing = $true

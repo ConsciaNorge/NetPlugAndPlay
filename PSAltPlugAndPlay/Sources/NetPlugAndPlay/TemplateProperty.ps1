@@ -24,7 +24,7 @@ Function Get-PnPNetworkDeviceTemplateParameters {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [string] $NetworkDevice,
@@ -51,7 +51,7 @@ Function Get-PnPNetworkDeviceTemplateParameters {
         throw [System.ArgumentException]::new("No template configuration found")
     }
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/' + $pnpTemplate.id + '/configuration/' + $templateConfiguration.id + '/property')
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/template/' + $pnpTemplate.id + '/configuration/' + $templateConfiguration.id + '/property')
 
     $requestSplat = @{
         UseBasicParsing = $true
@@ -71,14 +71,14 @@ Function Remove-PnPNetworkDeviceTemplateParameter {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [Guid]$ParameterId
     )
 
     Process {
-        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/property/' + $ParameterId)
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/template/property/' + $ParameterId)
 
         $requestSplat = @{
             UseBasicParsing = $true
@@ -99,14 +99,14 @@ Function Get-PnPNetworkDeviceTemplateParameterById {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [Guid]$ParameterId
     )
 
     Process {
-        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/property/' + $ParameterId)
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/template/property/' + $ParameterId)
 
         $requestSplat = @{
             UseBasicParsing = $true
@@ -127,7 +127,7 @@ Function Set-PnPNetworkDeviceTemplateParameter {
         [string] $PnPHost = 'localhost',
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [Guid]$ParameterId,
@@ -159,7 +159,7 @@ Function Set-PnPNetworkDeviceTemplateParameter {
             )
         }
 
-        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/property/' + $ParameterId)
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/template/property/' + $ParameterId)
 
         if($PSBoundParameters.Name) {
             $existingValue.name = $Name
@@ -188,7 +188,7 @@ Function New-PnPNetworkDeviceTemplateParameter {
         [string] $PnPHost = 'localhost',
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [Guid]$ConfigurationId,
@@ -201,7 +201,7 @@ Function New-PnPNetworkDeviceTemplateParameter {
     )
 
     Process {
-        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/configuration/' + $ConfigurationId + '/property')
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/template/configuration/' + $ConfigurationId + '/property')
 
         $request = @{
             name = $Name

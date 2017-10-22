@@ -24,7 +24,7 @@ Function Get-PnPNetworkDeviceTemplate {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [string] $Template
@@ -35,7 +35,7 @@ Function Get-PnPNetworkDeviceTemplate {
         throw [System.ArgumentException]::new("Invalid template specified " + $Template)
     }
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/' + $pnpTemplate.id + '/configuration')
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/template/' + $pnpTemplate.id + '/configuration')
 
     $requestSplat = @{
         UseBasicParsing = $true
@@ -55,7 +55,7 @@ Function Set-PnPNetworkDeviceTemplate {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter()]
         [string] $NetworkDevice,
@@ -91,7 +91,7 @@ Function Set-PnPNetworkDeviceTemplate {
             description = $description
         }
 
-        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/configuration/' + $configuration.id)
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/template/configuration/' + $configuration.id)
 
         $requestSplat = @{
             UseBasicParsing = $true
@@ -141,7 +141,7 @@ Function Set-PnPNetworkDeviceTemplate {
             properties = $TemplateParameters
         }
 
-        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/' + $pnpTemplate.id + '/configuration')
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/template/' + $pnpTemplate.id + '/configuration')
 
         $requestSplat = @{
             UseBasicParsing = $true
@@ -167,7 +167,7 @@ Function Get-PnPNetworkDeviceConfiguration {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter()]
         [string]$NetworkDevice,
@@ -184,7 +184,7 @@ Function Get-PnPNetworkDeviceConfiguration {
             )
         }
 
-        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/configuration/' + $ConfigurationId)
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/template/configuration/' + $ConfigurationId)
 
         $requestSplat = @{
             UseBasicParsing = $true
@@ -202,7 +202,7 @@ Function Get-PnPNetworkDeviceConfiguration {
             throw [System.ArgumentException]::new("Invalid network device specified " + $NetworkDevice)
         }
 
-        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/networkdevice/' + $pnpDevice.id + '/configuration')
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevice/' + $pnpDevice.id + '/configuration')
 
         $requestSplat = @{
             UseBasicParsing = $true
@@ -227,7 +227,7 @@ Function Remove-PnPNetworkDeviceConfiguration {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [string]$TemplateId,
@@ -236,7 +236,7 @@ Function Remove-PnPNetworkDeviceConfiguration {
         [string]$ConfigurationId
     )
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/template/' + $TemplateId + '/configuration/' + $ConfigurationId)
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/template/' + $TemplateId + '/configuration/' + $ConfigurationId)
 
     $requestSplat = @{
         UseBasicParsing = $true

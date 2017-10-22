@@ -24,7 +24,7 @@ Function Get-PnPNetworkDevice {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
         
         [Parameter()]
         [Guid] $Id = [Guid]::Empty,
@@ -37,7 +37,7 @@ Function Get-PnPNetworkDevice {
     )
 
     Process {
-        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/networkdevice')
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevice')
 
         if($Id -ne [Guid]::Empty) {
             $uri += ('/' + $Id.ToString())
@@ -73,7 +73,7 @@ Function Add-PnPNetworkDevice {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [string]$Hostname,
@@ -109,7 +109,7 @@ Function Add-PnPNetworkDevice {
         ipAddress = $IPAddress
     }
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/networkdevice')
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevice')
 
     $requestSplat = @{
         UseBasicParsing = $true
@@ -130,7 +130,7 @@ Function Set-PnPNetworkDevice {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter()]
         [Guid]$Id = [Guid]::Empty,
@@ -183,7 +183,7 @@ Function Set-PnPNetworkDevice {
         ipAddress = $IPAddress
     }
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/networkdevice/' + $id)
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevice/' + $id)
 
     $requestSplat = @{
         UseBasicParsing = $true
@@ -204,7 +204,7 @@ Function Remove-PnPNetworkDevice {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [string] $DomainName,
@@ -218,7 +218,7 @@ Function Remove-PnPNetworkDevice {
         Write-Debug -Message ('Device ' + $Hostname + '.' + $DomainName + ' not found')
     }
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/networkdevice/' + $networkDevice.id)
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevice/' + $networkDevice.id)
 
     $requestSplat = @{
         UseBasicParsing = $true
@@ -239,7 +239,7 @@ Function Get-PnPNetworkDeviceTemplates {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [string] $DomainName,
@@ -254,7 +254,7 @@ Function Get-PnPNetworkDeviceTemplates {
             Write-Debug -Message ('Device ' + $Hostname + '.' + $DomainName + ' not found')
         }
 
-        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/networkdevice/' + $networkDevice.id + '/template')
+        $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevice/' + $networkDevice.id + '/template')
 
         $requestSplat = @{
             UseBasicParsing = $true

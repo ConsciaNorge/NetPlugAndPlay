@@ -1,3 +1,4 @@
+$sitePrefix = '/NetPlugAndPlay'
 
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Sources/HelperScripts/Get-SubnetMaskFromPrefixLength.ps1')
 . (Join-Path -Path $PSScriptRoot -ChildPath 'Sources/HelperScripts/Get-SubnetMaskFromNetworkPrefix.ps1')

@@ -24,7 +24,7 @@ Function Get-PnPNetworkDeviceUplink {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [string] $DomainName,
@@ -43,7 +43,7 @@ Function Get-PnPNetworkDeviceUplink {
         throw [System.ArgumentException]::new('Failed to find network device ' + $NetworkDevice + '.' + $DomainName)
     }
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/networkdevice/' + $downlinkDevice.id + '/uplink')
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevice/' + $downlinkDevice.id + '/uplink')
 
     $requestSplat = @{
         UseBasicParsing = $true
@@ -63,7 +63,7 @@ Function Add-PnPNetworkDeviceUplink {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [string] $DomainName,
@@ -130,7 +130,7 @@ Function Add-PnPNetworkDeviceUplink {
         connectedToInterfaceIndex = $uplinkInterface.interfaceIndex
     }
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/networkdevice/' + $downlinkDevice.id + '/uplink')
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevice/' + $downlinkDevice.id + '/uplink')
 
     $requestSplat = @{
         UseBasicParsing = $true

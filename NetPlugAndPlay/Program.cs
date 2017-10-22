@@ -13,10 +13,12 @@ namespace NetPlugAndPlay
     public class Program
     {
         static Services.TFTP_Server.Server tftpServer;
+        static Services.DHCP_Server.Server dhcpServer;
 
         public static void Main(string[] args)
         {
             tftpServer = new Services.TFTP_Server.Server();
+            dhcpServer = new Services.DHCP_Server.Server();
 
             BuildWebHost(args).Run();
         }

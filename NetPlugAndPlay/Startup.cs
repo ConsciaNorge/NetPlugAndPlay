@@ -33,6 +33,8 @@ namespace NetPlugAndPlay
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            SampleData.InitializeDatabaseAsync(app.ApplicationServices).Wait();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -58,8 +60,6 @@ namespace NetPlugAndPlay
                     name: "spa-fallback",
                     defaults: new { controller = "Home", action = "Index" });
             });
-
-            SampleData.InitializeDatabaseAsync(app.ApplicationServices).Wait();
         }
     }
 }

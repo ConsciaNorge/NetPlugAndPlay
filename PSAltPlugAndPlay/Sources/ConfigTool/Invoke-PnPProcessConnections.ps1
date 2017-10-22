@@ -24,7 +24,7 @@ Function Invoke-PnPProcessConnections {
         [string] $PnPHost = 'localhost',
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [PSCustomObject]$Config,

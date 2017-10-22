@@ -24,7 +24,7 @@ Function Get-PnPNetworkDeviceTypeInterface {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [string] $DeviceType,
@@ -41,7 +41,7 @@ Function Get-PnPNetworkDeviceTypeInterface {
         throw [System.ArgumentException]::new('Cannot resolve network device type ''' + $DeviceType + '''')
     }
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/networkdevicetype/' + $networkDeviceType.id + '/interface')
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevicetype/' + $networkDeviceType.id + '/interface')
 
     if($Id -ne [Guid]::Empty) {
         $uri += ('/' + $Id.ToString())
@@ -65,7 +65,7 @@ Function Add-PnPNetworkDeviceTypeInterface {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [string] $DeviceType,
@@ -93,7 +93,7 @@ Function Add-PnPNetworkDeviceTypeInterface {
         interfaceIndex = $Index
     }
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/networkdevicetype/' + $networkDeviceType.id + '/interface')
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevicetype/' + $networkDeviceType.id + '/interface')
 
     $requestSplat = @{
         UseBasicParsing = $true
@@ -114,7 +114,7 @@ Function Add-PnPNetworkDeviceTypeInterfaceRange {
         [string] $PnPHost = 'localhost',        
 
         [Parameter()]
-        [int] $HostPort = 27599,
+        [int] $HostPort = 80,
 
         [Parameter(Mandatory)]
         [string] $DeviceType,
@@ -146,7 +146,7 @@ Function Add-PnPNetworkDeviceTypeInterfaceRange {
         count = $Count
     }
 
-    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + '/api/v0/plugandplay/networkdevicetype/' + $networkDeviceType.id + '/interface/range')
+    $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevicetype/' + $networkDeviceType.id + '/interface/range')
 
     $requestSplat = @{
         UseBasicParsing = $true
