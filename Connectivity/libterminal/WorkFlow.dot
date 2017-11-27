@@ -1,0 +1,139 @@
+digraph G {
+
+    node [style=filled shape=box]
+    
+    subgraph loginProcess {
+        label="Login Process";
+        node [style=filled];
+        color=blue;
+        style=filled;
+
+        start -> connectionExists;
+        connectionExists -> isConnected [label="Yes"]
+        isConnected -> deleteConnection [label="No"]
+        isConnected -> sendInitialCR [label="Yes"]
+        deleteConnection -> connectionExists
+        connectionExists -> createConnection[label="No"]
+        createConnection -> registerConnection
+        registerConnection -> attemptConnect
+        attemptConnect -> connectionSucceeded
+        connectionSucceeded -> sendInitialCR [label="Yes"]
+        connectionSucceeded -> criticalError [label="No\nfailed to\nconnect"]
+        sendInitialCR -> connectionClosed
+        connectionClosed -> deleteConnection [label="Yes"]
+        connectionClosed -> isPromptPasswordOnly [label="No"]
+        isPromptPasswordOnly -> isUsernamePrompt [label="No"]
+        isUsernamePrompt -> isUserPrompt [label="No"]
+        isUserPrompt -> isEnablePrompt [label="No"]
+        isEnablePrompt -> isGlobalConfigPrompt [label="No"]
+
+        isPromptPasswordOnly -> sendUserPassword [label="yes"]
+        sendUserPassword -> isPromptPasswordOnly2 [label="yes"]
+        isPromptPasswordOnly2 -> criticalError [label="yes\npassword rejected"]
+        isPromptPasswordOnly2 ->  isEnablePrompt [label="no"]
+
+        isUsernamePrompt -> sendUsername [label="yes"]
+        sendUsername -> isUsernamePrompt2 
+        isUsernamePrompt2 -> criticalError [label="yes\nusername\nrejected"]
+        isUsernamePrompt2 -> isPromptPasswordOnly [label="no"]
+
+        isUserPrompt -> sendEnable [label="Yes"]
+        sendEnable -> isUserPromptAgain 
+        isUserPromptAgain -> criticalError [label="yes\n'enable' command\nrejected"]
+        isUserPromptAgain -> isEnablePasswordRequest [label="No"]
+        isEnablePasswordRequest -> sendEnablePassword [label="yes"]
+        sendEnablePassword -> isEnablePasswordRequestAgain
+        isEnablePasswordRequestAgain -> criticalError [label="Yes\nEnable password\nrejected"]
+        isEnablePasswordRequestAgain -> isEnablePrompt [label="No"]
+
+        isGlobalConfigPrompt -> criticalError [label="No\ncurrent\nstate/prompt\nunrecognized"]
+        isGlobalConfigPrompt -> sendControlZ [label="Yes"]
+        sendControlZ -> isEnablePromptAfterCtrlZ
+        isEnablePromptAfterCtrlZ -> atEnablePrompt [label="Yes"]
+        isEnablePromptAfterCtrlZ -> criticalError [label="No\nCouldn't get\nto Enable prompt\nfrom config"]
+
+        isEnablePrompt -> atEnablePrompt [label="Yes"]
+
+        start [shape=ellipse label="Start"]
+        criticalError [shape=ellipse label="Critical\nError"]
+        atEnablePrompt [shape=ellipse label="At Enable Prompt"]
+        connectionExists [shape=diamond label="Connection exists\nin ConnectionManager"]
+        isConnected [shape=diamond label="Is connected"]
+        deleteConnection [label="Delete existing connection"]
+        sendInitialCR [label="Send initial CR"]
+        createConnection [label="Create connection"]
+        registerConnection [label="Register connection\nin ConnectionManager"]
+        attemptConnect [label="Attempt to connect to destination"]
+        connectionSucceeded [shape=diamond label="Connected?"]
+        connectionClosed [shape=diamond label="Connection Closed?"]
+
+        isPromptPasswordOnly [shape=diamond label="Received\n'[Pp]ass[Ww]ord:?'"]
+        sendUserPassword [label="Send user password"]
+        isPromptPasswordOnly2 [shape=diamond label="Received\n'[Pp]ass[Ww]ord:?'"]
+        
+        isUsernamePrompt [shape=diamond label="Received\n'[Uu]ser[Nn]ame\s*:?"]
+        sendUsername [label="Send user name"]
+        isUsernamePrompt2 [shape=diamond label="Received\n'[Uu]ser[Nn]ame\s*:?"]
+
+        isUserPrompt [shape=diamond label="Received\nuser exec prompt?"]
+        sendEnable [label="Send 'enable'"]
+        isEnablePasswordRequest [shape=diamond label="Received\n'[Pp]ass[Ww]ord:?"]
+        isUserPromptAgain [shape=diamond label="Received\nuser exec prompt?"]
+        sendEnablePassword [label="Send enabled password"]
+        isEnablePasswordRequestAgain [shape=diamond label="Received\n'[Pp]ass[Ww]ord:?"]
+
+        isEnablePrompt [shape=diamond label="Received\nenable prompt?"]
+
+        isGlobalConfigPrompt [shape=diamond label="Received\nglobal config\nprompt?"]
+        sendControlZ [label="Send 'Ctrl-Z'"]
+        isEnablePromptAfterCtrlZ [shape=diamond label="Received\nenable prompt?"]
+    }
+
+    subgraph TerminalSettings {
+        start_1 -> sendInitialCR_1
+        sendInitialCR_1 -> atEnablePrompt_1
+        atEnablePrompt_1 -> criticalError_1 [label="No\nInvalid\ninital\nstate"]
+        atEnablePrompt_1 -> sendShowTerminal_1 [label="Yes"]
+        sendShowTerminal_1 -> markStartOfOutput_1
+        markStartOfOutput_1 -> atEnablePromptAgain_1
+        atEnablePromptAgain_1 -> atMorePrompt_1 [label="No"]
+        atMorePrompt_1 -> criticalError_1 [label="No\nUnknown\nCLI state"]
+        atMorePrompt_1 -> sendSpace_1 [label="Yes"]
+        sendSpace_1 -> atEnablePrompt_1
+        atEnablePromptAgain_1 -> extactBufferFromMark_1
+        extactBufferFromMark_1 -> parseBufferAsShowTerminal_1
+        parseBufferAsShowTerminal_1 -> parsedOk_1
+        parsedOk_1 -> criticalError_1 [label="No\nCouldn't read\noutput of\n'show terminal'"]
+        parsedOk_1 -> isTerminalWidth0_1 [label="Yes"]
+        isTerminalWidth0_1 ->sendTerminalWidth0_1 [label="No"]
+        isTerminalWidth0_1 -> isTerminalLength0_1 [label="Yes"]
+        sendTerminalWidth0_1 -> isEnablePrompt1_1
+        isEnablePrompt1_1 -> criticalError_1 [label="No\nDidn't receive\nenable prompt\nafter\n'terminal width 0'"]
+        isEnablePrompt1_1 -> isTerminalLength0_1 [label="Yes"]
+        isTerminalLength0_1 -> done_1 [label="Yes"]
+        isTerminalLength0_1 -> sendTerminalLength0_1 [label="No"]
+        sendTerminalLength0_1 -> isEnablePrompt2_1
+        isEnablePrompt2_1 -> criticalError_1 [label="No\nInvalid CLI\nstate following\n'terminal length 0'"]
+        isEnablePrompt2_1 -> done_1 [label="Yes"]
+
+        start_1 [shape=ellipse label="Start"]
+        criticalError_1 [shape=ellipse label="Critical\nError"]
+        done_1 [shape=ellipse label="Done"]
+        sendInitialCR_1 [label="Send carriage return"]
+        atEnablePrompt_1 [shape=diamond label="Enable prompt received"]
+        markStartOfOutput_1 [label="Mark start\nof output"]
+        sendShowTerminal_1 [label="Send 'show terminal'"]
+        atEnablePromptAgain_1 [shape=diamond label="At enable prompt?"]
+        atMorePrompt_1 [shape=diamond label="More prompt? '\s*-+[Mm]ore-+\s*'"]
+        sendSpace_1 [label="Send space"]
+        extactBufferFromMark_1 [label="Extract buffer\nfrom mark"]
+        parseBufferAsShowTerminal_1 [label="Parse buffer\nas 'show terminal'"]
+        parsedOk_1 [label="Buffer\nparsed ok?"]
+        isTerminalWidth0_1 [shape=diamond label="Is\nTerminal\nwidth == 0"]
+        sendTerminalWidth0_1 [label="Send 'terminal width 0'"]
+        isEnablePrompt1_1 [shape=diamond label="Is enable prompt?"]
+        isTerminalLength0_1 [shape=diamond label="Is\nTerminal length == 0"]
+        sendTerminalLength0_1 [label="Send\n'terminal length 0'"]
+        isEnablePrompt2_1 [shape=diamond label="Is enable prompt?"]
+    }
+}

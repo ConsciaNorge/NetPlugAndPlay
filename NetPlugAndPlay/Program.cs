@@ -14,11 +14,14 @@ namespace NetPlugAndPlay
     {
         static Services.TFTP_Server.Server tftpServer;
         static Services.DHCP_Server.Server dhcpServer;
+        static Services.CDPWalker.CDPWalker walker;
 
         public static void Main(string[] args)
         {
             tftpServer = new Services.TFTP_Server.Server();
             dhcpServer = new Services.DHCP_Server.Server();
+            walker = new Services.CDPWalker.CDPWalker();
+            //walker.AddClient(System.Net.IPAddress.Parse("10.100.5.3"));
 
             BuildWebHost(args).Run();
         }

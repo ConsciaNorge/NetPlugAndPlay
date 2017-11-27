@@ -25,5 +25,6 @@ namespace NetPlugAndPlay.Models
         public DbSet<Template> Templates { get; set; }
         public DbSet<TemplateConfiguration> TemplateConfigurations { get; set; }
         public DbSet<TemplateProperty> TemplateProperties { get; set; }
+        public DbSet<TFTPFile> TFTPFiles { get; set; }
     }
 }

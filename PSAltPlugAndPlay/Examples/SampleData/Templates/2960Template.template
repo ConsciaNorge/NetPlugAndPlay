@@ -1,189 +1,341 @@
+!
 no service pad
-service timestamps debug datetime msec
-service timestamps log datetime msec
-no service password-encryption
+service timestamps debug datetime msec localtime
+service timestamps log datetime msec localtime
+no service finger
+no service tcp-small-servers
+no service udp-small-servers
+no ip finger
+no ip icmp redirect
+service nagle
+service tcp-keepalives-in
+service tcp-keepalives-out
+service password-encryption
 !
 hostname $hostname
+!
+!
+username admin privilege 15 password Minions12345
+enable secret Minions12345
+!
+clock timezone CET 1
+clock summer-time DST recurring last Sun Mar 2:00 last Sun Oct 3:00
+ip subnet-zero
+no ip domain-lookup
 ip domain-name $domainName
-!
-boot-start-marker
-boot-end-marker
-!
-enable secret 5 $enableSecret
-!
-username darren privilege 15 secret 5 $(esc.d)1$(esc.d)vCHF$(esc.d)/5U.fej.dDWsH9RLI.ewg0
-username trond privilege 15 secret 5 $(esc.d)1$(esc.d)HBKB$(esc.d)vqbM8whS.285aMLBgULkt1
-username admin privilege 15 secret 5 $(esc.d)1$(esc.d)AAB8$(esc.d)POAn5zy4.lLenxrOPDs0U/
-no aaa new-model
-system mtu routing 1500
-vtp mode transparent
-!
-spanning-tree mode mst
-spanning-tree portfast default
-spanning-tree extend system-id
-!
 ip dhcp snooping
 ip dhcp snooping vlan 1
+ip dhcp snooping information option
 ip dhcp snooping information option format remote-id string $deviceId
+
+vtp domain demo
+vtp mode transparent
+crypto key generate rsa general-keys modulus 2048
+dot1x system-auth-control
 !
-vlan internal allocation policy ascending
+spanning-tree mode rapid-pvst
+spanning-tree portfast bpdufilter default
+spanning-tree portfast bpduguard default
+no spanning-tree optimize bpdu transmission
+spanning-tree extend system-id
 !
+vlan 3
+name mgmt
+vlan 30
+name wifi
+vlan 100
+name demo
 vlan 101
- name 101_Infrastructure
-!
+name pub
+vlan 102
+name voice
+vlan 112
+name kontaktsenter_voice
+vlan 122
+name forvaltning_voice
 vlan 103
- name 103_GUEST
+name video
+vlan 666
+name quarantine
+vlan 999
+name komm
 !
-vlan 105
- name 105_LAB_LOCAL
+errdisable recovery cause udld
+errdisable recovery cause bpduguard
+errdisable recovery cause pagp-flap
+errdisable recovery cause link-flap
+errdisable recovery cause security-violation
+errdisable recovery cause psecure-violation
+errdisable recovery interval 3600
 !
-vlan 107
- name 107_LAB_LOCAL2
+macro name dot1x
+description __802.1X__
+switchport mode access
+! authentication event fail action authorize vlan 666
+! authentication event no-response action authorize vlan 666
+! authentication port-control auto
+! authentication violation protect
+! mab
+no snmp trap link-status
+no cdp enable
+spanning-tree portfast
+! power inline consumption 7500
+no macro description
+@
+macro name demo
+description __demo_PROD_LAN__
+switchport access vlan 100
+switchport mode access
+no logging event link-status
+no snmp trap link-status
+no cdp enable
+spanning-tree portfast
+no shutdown
+no macro description
+@
+macro name wifi
+description __demo_WIFI_LAN__
+switchport access vlan 30
+switchport mode access
+no logging event link-status
+no snmp trap link-status
+spanning-tree portfast
+power inline consumption 15400
+no shutdown
+no macro description
+@
+macro name voice_102
+description __demo_VOICE_LAN__
+switchport access vlan 102
+switchport mode access
+no logging event link-status
+no snmp trap link-status
+no cdp enable
+spanning-tree portfast
+power inline consumption 7500
+no shutdown
+no macro description
+@
+macro name voice_112
+description __demo_KS-VOICE_LAN__
+switchport access vlan 112
+switchport mode access
+no logging event link-status
+no snmp trap link-status
+no cdp enable
+spanning-tree portfast
+power inline consumption 7500
+no shutdown
+no macro description
+@
+macro name voice_122
+description __demo_FV-VOICE_LAN__
+switchport access vlan 122
+switchport mode access
+no logging event link-status
+no snmp trap link-status
+no cdp enable
+spanning-tree portfast
+power inline consumption 7500
+no shutdown
+no macro description
+@
+macro name pub
+description __demo_PUB_LAN__
+switchport access vlan 101
+switchport mode access
+switchport port-security
+switchport port-security maximum 1
+switchport port-security aging time 240
+switchport port-security violation protect
+no logging event link-status
+no snmp trap link-status
+no cdp enable
+spanning-tree portfast
+no shutdown
+no macro description
+@
+macro name video
+description __demo_VIDEO_LAN__
+switchport access vlan 103
+switchport mode access
+no logging event link-status
+no snmp trap link-status
+no cdp enable
+spanning-tree portfast
+no shutdown
+no macro description
+@
+macro name trunk
+description __MOT_SWITCH__
+switchport mode trunk
+switchport nonegotiate
+switchport trunk native vlan 3
+switchport trunk allowed vlan all
+cdp enable
+no shutdown
+no macro description
+@
 !
-vlan 108
- name 108_LAB_C1921
 !
-vlan 1920
- name 1920_PDU
 !
-ip ssh version 2
+spanning-tree vlan 1,3,30,100-103,999 root primary
 !
-interface Port-channel1
+ interface FastEthernet0/1
+ description __ROUTER__
  switchport mode trunk
- spanning-tree portfast trunk
+ switchport nonegotiate
+ switchport trunk allowed vlan all
+ip dhcp snooping trust
+ cdp enable
+ speed auto
+ duplex auto
+ no shutdown
+ exit
 !
-interface Port-channel2
- switchport trunk native vlan 101
+ interface range FastEthernet0/2-23
+ description __802.1X__
+ switchport mode access
+ !authentication event fail action authorize vlan 666
+ !authentication event no-response action authorize vlan 666
+ !authentication port-control auto
+ !authentication violation protect
+ !mab
+ no snmp trap link-status
+ no cdp enable
+ spanning-tree portfast
+ !power inline consumption 7500
+ exit
+!
+ interface FastEthernet0/24
+ description __MOT_SWITCH__
  switchport mode trunk
- spanning-tree portfast trunk
+ switchport nonegotiate
+ switchport trunk allowed vlan all
+ip dhcp snooping trust
+ no shutdown
+ exit
 !
-interface Port-channel3
+ interface GigaBitEthernet0/1
+ description __MOT_SWITCH__
  switchport mode trunk
- spanning-tree portfast trunk
+ switchport nonegotiate
+ switchport trunk allowed vlan all
+ip dhcp snooping trust
+ no shutdown
+ exit
 !
-interface GigabitEthernet0/1
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/2
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/3
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/4
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/5
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/6
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/7
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/8
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/9
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/10
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/11
- description Wireless Access Point
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/12
- switchport access vlan 101
+ interface GigaBitEthernet0/2
+ description __MOT_SWITCH__
  switchport mode trunk
+ switchport nonegotiate
+ switchport trunk allowed vlan all
+ip dhcp snooping trust
+ no shutdown
+ exit
 !
-interface GigabitEthernet0/13
- switchport trunk native vlan 101
- switchport mode trunk
- spanning-tree portfast trunk
 !
-interface GigabitEthernet0/14
- switchport access vlan 101
- switchport mode access
 !
-interface GigabitEthernet0/15
- switchport access vlan 101
- switchport trunk native vlan 101
- switchport mode trunk
-!
-interface GigabitEthernet0/16
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/17
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/18
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/19
- switchport access vlan 101
- switchport mode access
-!
-interface GigabitEthernet0/20
- switchport access vlan 101
- switchport mode access
- spanning-tree portfast trunk
-!
-interface GigabitEthernet0/21
- switchport mode trunk
- channel-group 3 mode auto
- spanning-tree portfast trunk
-!
-interface GigabitEthernet0/22
- switchport mode trunk
- channel-group 3 mode auto
-!
-interface GigabitEthernet0/23
- switchport mode trunk
- channel-group 1 mode active
-!
-interface GigabitEthernet0/24
- switchport mode trunk
- channel-group 1 mode active
 !
 interface Vlan1
- no ip address
- shutdown
-!
-interface Vlan101
+description __Mgmt nett__
  ip address $ipAddress $subnetMask
+ no shutdown
+ exit
+!
 !
 ip default-gateway $defaultGateway
-ip http server
-ip http secure-server
-logging esm config
-snmp-server group PRIMEGROUP v3 priv
-snmp-server contact $snmpContact
-snmp-server location $snmpLocation
-
+no ip http server
+no ip http secure-server
+logging trap notifications
+logging 10.54.204.110
+logging 10.54.248.110
+!
+access-list 1 remark __For ssh tilgang__
+access-list 1 permit 10.100.0.0 0.0.255.255
+access-list 1 deny any log
+access-list 90 remark __snmp read__
+access-list 90 permit 10.100.0.0 0.0.255.255
+access-list 90 deny any log
+access-list 91 remark __snmp read&write__
+access-list 91 permit 10.100.0.0 0.0.255.255
+access-list 91 deny  any log
+!
+snmp-server community rortv RO 90
+snmp-server community NM_les RO 90
+snmp-server community NM_skriv RW 91
+snmp-server community 2manysecrets RW 91
+snmp-server contact DI Kommunikasjon
+snmp-server location 1149
+snmp-server system-shutdown
+snmp-server enable traps snmp authentication warmstart linkdown linkup coldstart
+snmp-server enable traps entity
+snmp-server enable traps bridge
+snmp-server enable traps vtp
+snmp-server enable traps vlancreate
+snmp-server enable traps vlandelete
+snmp-server enable traps port-security
+snmp-server enable traps envmon fan shutdown supply temperature
+snmp-server enable traps vlan-membership
+!
+snmp-server host 10.54.204.110 rortv
+snmp-server host 10.54.248.110 rortv
+!
+aaa new-model
+!tacacs server ACS
+! address ipv4 10.144.14.20
+! key 7 1315471E5E5F552839742C602725430341
+!
+!tacacs-server directed-request
+!
+!radius server .1X
+!address ipv4 10.144.14.20 auth-port 1645 acct-port 1646
+!key 7 044B5B0A5A721D4C1B490144000C5C007D
+!
+no banner login
+no banner motd
+!
+banner login #
++-------------------------------------------------------------------+
+Hostname: $(hostname).$(domain)
++-------------------------------------------------------------------+
+                      Dette er et privat system.                     
+  All uautorisert tilgang er forbudt, og vil bli rettslig forfulgt.  
+                       All tilgang blir logget.                      
+                                                                     
+                      This is a private system.                      
+   Any unauthorized access is prohibited, and will be prosecuted.    
+                     All actions will be logged.                     
++-------------------------------------------------------------------+
+demo @Nettverk
++-------------------------------------------------------------------+
+#
+!
 !
 line con 0
+exec-timeout 15 0
+!login local
 line vty 0 4
- exec-timeout 0 0
- login local
+access-class 1 in
+exec-timeout 15 0
+privilege level 15
+transport input telnet ssh
 line vty 5 15
- exec-timeout 0 0
- login local
+access-class 1 in
+exec-timeout 15 0
+privilege level 15
+transport input telnet ssh
+!
+ntp server 10.65.0.1 prefer
+ntp server 10.65.0.2
+!
+aaa authentication login default  local
+aaa authentication enable default enable
+aaa authorization exec default  none
+!aaa authorization network default group radius
+!aaa accounting exec default start-stop group tacacs+
+!aaa accounting commands 15 default start-stop group tacacs+
+!aaa authorization commands 1 default group tacacs+ if-authenticated
+!aaa authorization commands 15 default group tacacs+ if-authenticated
 !
 end

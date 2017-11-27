@@ -11,20 +11,40 @@ using System;
 namespace NetPlugAndPlay.Migrations
 {
     [DbContext(typeof(PnPServerContext))]
-    [Migration("20171011173122_Bob")]
-    partial class Bob
+    [Migration("20171124160136_Initial")]
+    partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "2.0.0-rtm-26452")
+                .HasAnnotation("ProductVersion", "2.0.1-rtm-125")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+            modelBuilder.Entity("NetPlugAndPlay.Models.DHCPExclusion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("End");
+
+                    b.Property<Guid?>("NetworkDeviceId");
+
+                    b.Property<string>("Start");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NetworkDeviceId");
+
+                    b.ToTable("DHCPExclusion");
+                });
 
             modelBuilder.Entity("NetPlugAndPlay.Models.NetworkDevice", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd();
+
+                    b.Property<bool>("DHCPRelay");
 
                     b.Property<string>("Description");
 
@@ -149,6 +169,13 @@ namespace NetPlugAndPlay.Migrations
                     b.HasIndex("TemplateConfigurationId");
 
                     b.ToTable("TemplateProperties");
+                });
+
+            modelBuilder.Entity("NetPlugAndPlay.Models.DHCPExclusion", b =>
+                {
+                    b.HasOne("NetPlugAndPlay.Models.NetworkDevice")
+                        .WithMany("DHCPExclusions")
+                        .HasForeignKey("NetworkDeviceId");
                 });
 
             modelBuilder.Entity("NetPlugAndPlay.Models.NetworkDevice", b =>

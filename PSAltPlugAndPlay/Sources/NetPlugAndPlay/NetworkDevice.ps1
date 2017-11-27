@@ -88,10 +88,19 @@ Function Add-PnPNetworkDevice {
         [string]$Description,
 
         [Parameter()]
-        [string]$IPAddress
+        [string]$IPAddress,
+
+        [Parameter()]
+        [string]$Network,
+
+        [Parameter()]
+        [switch]$DhcpRelay=$false,
+
+        [Parameter()]
+        [PSCustomObject[]]$DhcpExclusions
     )
 
-    $networkDeviceType = Get-PnPNetworkDeviceType | Where-Object { $_.Name -ilike $DeviceType }
+    $networkDeviceType = Get-PnPNetworkDeviceType -PnPHost $PnPHost -HostPort $HostPort | Where-Object { $_.Name -ilike $DeviceType }
     if (
         ($null -eq $networkDeviceType) -or
         ($networkDeviceType.PSObject.Properties -match 'Count')
@@ -107,6 +116,14 @@ Function Add-PnPNetworkDevice {
         domainName = $DomainName
         description = $Description
         ipAddress = $IPAddress
+        network = $Network
+        dhcpRelay = $DhcpRelay.ToBool()
+        dhcpExclusions = $DhcpExclusions.ForEach({ 
+            @{ 
+                start = $_.Start
+                end = $_.End
+            } 
+        })
     }
 
     $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevice')
@@ -119,7 +136,7 @@ Function Add-PnPNetworkDevice {
         Body = ($requestBody | ConvertTo-Json)
     }
 
-    $result = Invoke-RestMethod @requestSplat
+    $result = Invoke-RestMethod @requestSplat -Verbose
 
     return $result
 }
@@ -148,7 +165,16 @@ Function Set-PnPNetworkDevice {
         [string]$Description,
 
         [Parameter()]
-        [string]$IPAddress
+        [string]$IPAddress,
+
+        [Parameter()]
+        [string]$Network,
+
+        [Parameter()]
+        [switch]$DhcpRelay=$false,
+
+        [Parameter()]
+        [PSCustomObject[]]$DhcpExclusions
     )
 
     if($Id -eq [Guid]::Empty) {
@@ -164,7 +190,7 @@ Function Set-PnPNetworkDevice {
         $Id = $networkDevice.id
     } 
 
-    $networkDeviceType = Get-PnPNetworkDeviceType | Where-Object { $_.Name -ilike $DeviceType }
+    $networkDeviceType = Get-PnPNetworkDeviceType -PnPHost $PnPHost -HostPort $HostPort | Where-Object { $_.Name -ilike $DeviceType }
     if (
         ($null -eq $networkDeviceType) -or
         ($networkDeviceType.PSObject.Properties -match 'Count')
@@ -181,6 +207,14 @@ Function Set-PnPNetworkDevice {
         domainName = $DomainName
         description = $Description
         ipAddress = $IPAddress
+        network = $Network
+        dhcpRelay = $DhcpRelay.ToBool()
+        dhcpExclusions = $DhcpExclusions.ForEach({ 
+            @{ 
+                start = $_.Start
+                end = $_.End
+            } 
+        })
     }
 
     $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevice/' + $id)
@@ -193,7 +227,7 @@ Function Set-PnPNetworkDevice {
         Body = ($requestBody | ConvertTo-Json)
     }
 
-    $result = Invoke-RestMethod @requestSplat
+    $result = Invoke-RestMethod @requestSplat 
 
     return $result
 }

@@ -1,0 +1,36 @@
+service timestamps log datetime msec show-timezone
+service password-encryption
+!
+file prompt quiet
+!
+hostname $hostname
+ip domain-name $domainName
+!
+aaa new-model
+aaa authentication login default local
+aaa authentication enable default enable
+aaa authorization console
+aaa authorization exec default local
+!
+vtp mode transparent
+!
+int vlan 1
+ ip address dhcp
+!
+username initialConfig privilege 15 secret Minions12345
+!
+ip access-list standard ACL_CDP_SNOOPER
+ permit $tftpServer 0.0.0.0
+!
+line vty 0 15
+ login authentication default
+ transport input telnet
+ access-class ACL_CDP_SNOOPER in
+!
+kron policy-list loadConfig
+ cli copy tftp://$tftpServer/config.txt flash:biteme.txt
+!
+kron occurrence loadConfig in 1 recurring
+ policy-list loadConfig
+!
+end

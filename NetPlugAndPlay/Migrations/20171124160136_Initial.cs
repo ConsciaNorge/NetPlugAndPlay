@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace NetPlugAndPlay.Migrations
 {
-    public partial class Bob : Migration
+    public partial class Initial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -12,10 +12,10 @@ namespace NetPlugAndPlay.Migrations
                 name: "NetworkDeviceTypes",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Manufacturer = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ProductId = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<Guid>(nullable: false),
+                    Manufacturer = table.Column<string>(nullable: true),
+                    Name = table.Column<string>(nullable: true),
+                    ProductId = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -26,9 +26,9 @@ namespace NetPlugAndPlay.Migrations
                 name: "Templates",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<Guid>(nullable: false),
+                    Content = table.Column<string>(nullable: true),
+                    Name = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -39,12 +39,13 @@ namespace NetPlugAndPlay.Migrations
                 name: "NetworkDevices",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DeviceTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DomainName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Hostname = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    IPAddress = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<Guid>(nullable: false),
+                    DHCPRelay = table.Column<bool>(nullable: false),
+                    Description = table.Column<string>(nullable: true),
+                    DeviceTypeId = table.Column<Guid>(nullable: true),
+                    DomainName = table.Column<string>(nullable: true),
+                    Hostname = table.Column<string>(nullable: true),
+                    IPAddress = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -61,10 +62,10 @@ namespace NetPlugAndPlay.Migrations
                 name: "NetworkInterfaces",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DeviceTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    InterfaceIndex = table.Column<int>(type: "int", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<Guid>(nullable: false),
+                    DeviceTypeId = table.Column<Guid>(nullable: true),
+                    InterfaceIndex = table.Column<int>(nullable: false),
+                    Name = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -78,14 +79,34 @@ namespace NetPlugAndPlay.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DHCPExclusion",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(nullable: false),
+                    End = table.Column<string>(nullable: true),
+                    NetworkDeviceId = table.Column<Guid>(nullable: true),
+                    Start = table.Column<string>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DHCPExclusion", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DHCPExclusion_NetworkDevices_NetworkDeviceId",
+                        column: x => x.NetworkDeviceId,
+                        principalTable: "NetworkDevices",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "NetworkDeviceLinks",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ConnectedToDeviceId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ConnectedToInterfaceIndex = table.Column<int>(type: "int", nullable: false),
-                    InterfaceIndex = table.Column<int>(type: "int", nullable: false),
-                    NetworkDeviceId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    Id = table.Column<Guid>(nullable: false),
+                    ConnectedToDeviceId = table.Column<Guid>(nullable: true),
+                    ConnectedToInterfaceIndex = table.Column<int>(nullable: false),
+                    InterfaceIndex = table.Column<int>(nullable: false),
+                    NetworkDeviceId = table.Column<Guid>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -108,10 +129,10 @@ namespace NetPlugAndPlay.Migrations
                 name: "TemplateConfigurations",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    NetworkDeviceId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    TemplateId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    Id = table.Column<Guid>(nullable: false),
+                    Description = table.Column<string>(nullable: true),
+                    NetworkDeviceId = table.Column<Guid>(nullable: true),
+                    TemplateId = table.Column<Guid>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -134,10 +155,10 @@ namespace NetPlugAndPlay.Migrations
                 name: "TemplateProperties",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    TemplateConfigurationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<Guid>(nullable: false),
+                    Name = table.Column<string>(nullable: true),
+                    TemplateConfigurationId = table.Column<Guid>(nullable: true),
+                    Value = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -149,6 +170,11 @@ namespace NetPlugAndPlay.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DHCPExclusion_NetworkDeviceId",
+                table: "DHCPExclusion",
+                column: "NetworkDeviceId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_NetworkDeviceLinks_ConnectedToDeviceId",
@@ -188,6 +214,9 @@ namespace NetPlugAndPlay.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "DHCPExclusion");
+
             migrationBuilder.DropTable(
                 name: "NetworkDeviceLinks");
 

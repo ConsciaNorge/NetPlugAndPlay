@@ -1,0 +1,205 @@
+﻿@namespace libterminal.Helpers.Parsers
+@classname ShowCDPEntry
+@using libterminal.Helpers.Model;
+@using System.Net;
+
+/*
+ * Parser Rules
+ */
+
+CDPEntries<List<ShowCDPEntryItem>>
+ = 	WS? items:CDPEntry* WS? EOF { new List<ShowCDPEntryItem>(items) }
+    
+CLICommand
+     = Line* 'show cdp entry *'
+    
+Line
+    = [^n]*[\n]
+
+CDPEntry<ShowCDPEntryItem>
+ = EntryStart 
+   deviceId:DeviceID 
+   entryAddresses:EntryAddresses 
+   platform:Platform Comma WS? capabilities:Capabilities 
+   intf:Interface Comma WS? portId:PortID
+   holdTime:HoldTime
+   version:Version
+   advVersion:AdvertisementVersion
+   extras:AdvertisementExtra* { 
+    new ShowCDPEntryItem {
+        DeviceID = deviceId,
+        EntryAddresses = new List<System.Net.IPAddress>(entryAddresses),
+        Platform = platform,
+        Capabilities = new List<ECDPCapability>(capabilities),
+        Interface = intf,
+        PortId = portId,
+        HoldTime = holdTime,
+        VersionText = version,
+        AdvertisementVersion = advVersion,
+        AdvertisementExtras = new List<CDPExtra>(extras)
+    }
+   }
+ 
+EntryStart
+ = [-]+[\r]?[\n]
+
+DeviceID
+ = 'Device ID:' WS? dn:DeviceName WS? { dn }
+
+DeviceName
+ = ToEndOfLine 
+ 
+EntryAddresses<IList<System.Net.IPAddress>>
+ = 'Entry address(es):' WS ips:(EntryIPAddress*) { ips } 
+ 
+EntryIPAddress<System.Net.IPAddress>
+ = 'IP address:' WS? ip:IPAddress WS? { ip }
+ / 'IPv6 address:' WS? ip:IPv6Address WS? { ip }
+ 
+IPAddress<System.Net.IPAddress>
+ = a:Octet '.' b:Octet '.' c:Octet '.' d:Octet { new System.Net.IPAddress(new byte[] { Convert.ToByte(a), Convert.ToByte(b), Convert.ToByte(c), Convert.ToByte(d) }) }
+
+Octet<int>
+ = i:[0-9]+ { Convert.ToInt32(string.Concat(i)) }
+ 
+IPv6Address<System.Net.IPAddress>
+ = ip:(IPv6AddressPart '::' IPv6AddressPart) IPv6AddressScope? { System.Net.IPAddress.Parse(ip) }
+ / ip:IPv6AddressPart IPv6AddressScope? { System.Net.IPAddress.Parse(ip) }
+
+IPv6AddressPart
+ = Hextet (':' Hextet)* 
+ 
+Hextet 
+ = [0-9a-fA-F]+ 
+ 
+IPv6AddressScope
+ = WS? '(global unicast)'
+ / WS? '(link-local)'
+ 
+Platform
+ = 'Platform:' WS? [^,]+ WS?
+ 
+Capabilities <IList<ECDPCapability>>
+ = 'Capabilities:' WS? caps:(Capability*) { caps }
+ 
+Capability <ECDPCapability>
+ = 'Router' WS? { ECDPCapability.Router }
+ / 'Switch' WS? { ECDPCapability.Switch }
+ / 'Source-Route-Bridge' WS? { ECDPCapability.SourceRouteBridge }
+ / 'IGMP' WS? { ECDPCapability.IGMP }
+ / 'Trans-Bridge' WS? { ECDPCapability.TransBridge }
+ / 'CVTA' WS? { ECDPCapability.CVTA }
+ / 'phone' WS? { ECDPCapability.Phone }
+ / 'port' WS? { ECDPCapability.Port }
+ 
+// TODO : This is a Cisco interface, parse it properly
+Interface
+ = 'Interface:' WS? intf:([A-Za-z][A-Za-z0-9./]+) WS? { intf }
+ 
+PortID
+ = 'Port ID (outgoing port):' WS? portId:([A-Za-z][A-Za-z0-9./]+) WS? { portId }
+ 
+// TODO : handle holdtime stuff nicer
+HoldTime<int>
+ = 'Holdtime' WS? ':' WS? seconds:Number WS? 'sec' WS? { seconds }
+ 
+Version
+ = 'Version' WS? ':' ToEndOfLine NoBlankLines WS?
+ 
+NoBlankLines
+ = ([^\r\n]+[\r]?[\n])*
+
+AdvertisementVersion<int>
+ = 'advertisement version' WS? ':' WS? res:Number WS? { res }
+ 
+AdvertisementExtra<CDPExtra>
+ = Duplex 
+ / text:ProtocolHello { new CDPNotImplementedYet { Name = "protocol hello", Value = text } }
+ / VTPManagementDomain 
+ / NativeVLAN 
+ / ManagementAddresses 
+ / text:PowerAvailableTLV { new CDPNotImplementedYet { Name = "power available", Value = text } }
+ / text:PowerDrawn { new CDPNotImplementedYet { Name = "power drawn", Value = text } }
+ / text:PowerRequestAndPowerManagement { new CDPNotImplementedYet { Name = "power request and management", Value = text } }
+ / text:PowerRequestLevels { new CDPNotImplementedYet { Name = "power request levels", Value = text } }
+ 
+Duplex<CDPDuplex>
+ = 'Duplex' WS? ':' WS? duplex:DuplexValue WS? {
+     new CDPDuplex { Duplex = duplex }
+   }
+ 
+DuplexValue<EDuplex>
+ = 'full' { EDuplex.Full }
+ / 'half' { EDuplex.Half }
+
+ProtocolHello
+ = 'Protocol Hello' WS? ':' WS? [^\r\n]+ WS?
+
+VTPManagementDomain<CDPVTPManagementDomain>
+ = 'VTP Management Domain' WS? ':' WS? '\'' vtp:([^']*) '\'' WS? {
+     new CDPVTPManagementDomain { VTPManagementDomain = string.Concat(vtp) }
+   }
+ 
+NativeVLAN<CDPNativeVLAN>
+ = 'Native VLAN' WS? ':' WS? vlan:Number WS? {
+     new CDPNativeVLAN { NativeVLAN = vlan } 
+   }
+ 
+ManagementAddresses<CDPManagementIPAddresses>
+ = 'Management address(es)' WS? ':' WS? ips:(EntryIPAddress*) WS? { 
+     new CDPManagementIPAddresses { ManagementIPAddresses = new List<System.Net.IPAddress>(ips) } 
+   }
+
+PowerAvailableTLV
+ = 'Power Available TLV' WS? ':' WS? 
+   PowerRequestID Comma WS?
+   PowerManagementID Comma WS?
+   PowerAvailable Comma WS?
+   PowerManagementLevel WS?
+ 
+PowerRequestID
+ = 'Power request id' WS? ':' WS? [^,]+
+
+PowerManagementID
+ = 'Power management id' WS? ':' WS? [^,]+
+
+PowerAvailable
+ = 'Power available' WS? ':' WS? [^,]+
+
+PowerManagementLevel
+ = 'Power management level' WS? ':' WS? ToEndOfLine
+
+// Parse power properly
+PowerDrawn
+ = 'Power drawn' WS? ':' WS? ToEndOfLine WS?
+
+PowerRequestAndPowerManagement
+ = PowerRequestID WS? Comma WS? ShortPowerManagementID WS?
+
+ShortPowerManagementID
+ = 'Power management id' WS? ':' WS? ToEndOfLine
+
+PowerRequestLevels
+ = 'Power request levels are' WS? ':' WS? (Number WS?)*
+
+ToEndOfLine
+ = text:([^\r\n]*)[\r]?[\n] { string.Concat(text) }
+
+/*
+ * Lexer Rules
+ */
+
+WS
+ = [ \t\r\n]+ 
+
+Number<int>
+ = i:([0-9]+) { Convert.ToInt32(string.Concat(i)) }
+
+Comma
+ = ','   
+
+CiscoPrompt
+ = [A-Za-z][A-Za-z0-9-_]*[#>]
+
+EOF 
+ = !.

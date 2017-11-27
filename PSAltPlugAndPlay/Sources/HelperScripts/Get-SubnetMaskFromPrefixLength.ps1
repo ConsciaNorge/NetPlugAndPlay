@@ -31,9 +31,15 @@ Function Get-SubnetMaskFromPrefixLength {
     )
 
     $mask = [uint32]'0xFFFFFFFF' -shl (32 - $PrefixLength)
+    $maskBytes = @(
+        [Convert]::ToByte($mask -shr 24),
+        [Convert]::ToByte(($mask -shr 16) -band 0xFF),
+        [Convert]::ToByte(($mask -shr 8) -band 0xFF),
+        [Convert]::ToByte($mask -band 0xFF)
+    )
 
     $ipAddress = [System.Net.IPAddress]::new(
-        [System.Net.IPAddress]::HostToNetworkOrder($mask) -shr 32
+        $maskBytes
     )
 
     return $ipAddress.ToString()

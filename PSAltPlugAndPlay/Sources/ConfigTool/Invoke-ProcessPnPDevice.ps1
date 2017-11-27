@@ -85,8 +85,15 @@ Function Invoke-ProcessPnPDevice {
             }
 
             $ipAddress = ''
+            $network = ''
             if($null -ne (Get-Member -InputObject 'ipAddress')) {
                 $ipAddress = Get-IPAddressFromNetworkPrefix -Prefix $DeviceConfig.ipAddress
+                $network = Get-NetworkFromNetworkPrefix -Prefix $DeviceConfig.ipAddress
+            }
+
+            $dhcpRelay = $false
+            if($null -ne $DeviceConfig.dhcpRelay) {
+                $dhcpRelay = $DeviceConfig.dhcpRelay
             }
 
             $addSplat = [PSObject]@{
@@ -95,6 +102,9 @@ Function Invoke-ProcessPnPDevice {
                 Description     = $DeviceConfig.description
                 DeviceType      = $DeviceConfig.deviceType
                 IPAddress       = $ipAddress
+                Network         = $network
+                DhcpRelay       = $dhcpRelay
+                DhcpExclusions  = $DeviceConfig.dhcpExclusions
             }
 
             $networkDevice = Add-PnPNetworkDevice @hostParams @addSplat
@@ -128,8 +138,10 @@ Function Invoke-ProcessPnPDevice {
             }
 
             $ipAddress = ''
+            $network = ''
             if($null -ne (Get-Member -InputObject 'ipAddress')) {
                 $ipAddress = Get-IPAddressFromNetworkPrefix -Prefix $DeviceConfig.ipAddress
+                $network = Get-NetworkFromNetworkPrefix -Prefix $DeviceConfig.ipAddress
             }
 
             if($networkDevice.ipAddress -ne $ipAddress) {
@@ -139,11 +151,32 @@ Function Invoke-ProcessPnPDevice {
                 )
             }
 
+            if($networkDevice.network -ne $network) {
+                $updateNeeded = $true
+                Write-Debug -Message (
+                    'Network changed from ' + $networkDevice.network  + ' to ' + $network + ', update needed'
+                )
+            }
+
+            $dhcpRelay = $false
+            if($null -ne $DeviceConfig.dhcpRelay) {
+                $dhcpRelay = $DeviceConfig.dhcpRelay
+            }
+
+            if($dhcpRelay -ne $networkDevice.dhcpRelay) {
+                $updateNeeded = $true
+                Write-Debug -Message (
+                    'DHCP relay status has changed from ' + $networkDevice.dhcpRelay.ToString() + ' to ' + $dhcpRelay.ToString()
+                )
+            }
+
             if($updateNeeded) {
                 Write-Verbose -Message (
                     'Changes detected to network device ' + $networkDevice.hostname + ', updating record'
                 )
             }
+
+            # TODO : Compare DHCP exclusions
 
             $updateSplat = @{
                 Id              = $networkDevice.id
@@ -152,6 +185,9 @@ Function Invoke-ProcessPnPDevice {
                 Description     = $DeviceConfig.description
                 DeviceType      = $DeviceConfig.deviceType
                 IPAddress       = $ipAddress
+                Network         = $network
+                DhcpRelay       = $dhcpRelay
+                DhcpExclusions  = $DeviceConfig.dhcpExclusions
             }
 
             $networkDevice = Set-PnPNetworkDevice @hostParams @updateSplat

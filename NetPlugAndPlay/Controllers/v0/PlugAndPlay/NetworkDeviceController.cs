@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using NetPlugAndPlay.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Primitives;
+using System.Text;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -59,6 +60,10 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
                 [FromBody] NetworkDevice networkDevice
             )
         {
+            var buf = new byte[Request.Body.Length];
+            Request.Body.Seek(0, System.IO.SeekOrigin.Begin);
+            Request.Body.Read(buf, 0, buf.Length);
+            var text = Encoding.ASCII.GetString(buf);
             if (networkDevice == null || networkDevice.DeviceType == null || networkDevice.DeviceType.Id == null)
             {
                 return BadRequest();

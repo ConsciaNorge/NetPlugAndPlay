@@ -8,9 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="2.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="2.0.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.0.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +32,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Connectivity\libterminal\libterminal.csproj" />
+    <ProjectReference Include="..\Connectivity\Pegasus\Pegasus.Common.Core2\Pegasus.Common.Core2.csproj" />
     <ProjectReference Include="..\LibDHCPServer\LibDHCPServer\LibDHCPServer.csproj" />
     <ProjectReference Include="..\NVelocity\NVelocity.csproj" />
     <ProjectReference Include="..\Tftp.Net\Tftp.Net.csproj" />
@@ -42,6 +45,10 @@
     <TypeScriptCompile Include="ClientApp\app\model\networkdevicelink.ts" />
     <TypeScriptCompile Include="ClientApp\app\model\networkdevicetype.ts" />
     <TypeScriptCompile Include="ClientApp\app\model\networkinterface.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Services\Common\NetworkTools\" />
   </ItemGroup>
 
   <Target Name="DebugRunWebpack" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('wwwroot\dist') ">

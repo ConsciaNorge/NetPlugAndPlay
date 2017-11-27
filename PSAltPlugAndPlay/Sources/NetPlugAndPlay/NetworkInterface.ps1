@@ -33,7 +33,7 @@ Function Get-PnPNetworkDeviceTypeInterface {
         [Guid] $Id = [Guid]::Empty
     )
 
-    $networkDeviceType = Get-PnPNetworkDeviceType | Where-Object { $_.Name -ilike $DeviceType }
+    $networkDeviceType = Get-PnPNetworkDeviceType -PnPHost $PnPHost -HostPort $HostPort | Where-Object { $_.Name -ilike $DeviceType }
     if (
         ($null -eq $networkDeviceType) -or
         ($networkDeviceType.PSObject.Properties -match 'Count')
@@ -77,7 +77,7 @@ Function Add-PnPNetworkDeviceTypeInterface {
         [int] $Index
     )
 
-    $networkDeviceType = Get-PnPNetworkDeviceType | Where-Object { $_.Name -ilike $DeviceType }
+    $networkDeviceType = Get-PnPNetworkDeviceType -PnPHost $PnPHost -HostPort $HostPort | Where-Object { $_.Name -ilike $DeviceType }
     if (
         ($null -eq $networkDeviceType) -or
         ($networkDeviceType.PSObject.Properties -match 'Count')
@@ -129,7 +129,7 @@ Function Add-PnPNetworkDeviceTypeInterfaceRange {
         [int] $Count
     )
 
-    $networkDeviceType = Get-PnPNetworkDeviceType | Where-Object { $_.Name -ilike $DeviceType }
+    $networkDeviceType = Get-PnPNetworkDeviceType -PnPHost $PnPHost -HostPort $HostPort | Where-Object { $_.Name -ilike $DeviceType }
     if (
         ($null -eq $networkDeviceType) -or
         ($networkDeviceType.PSObject.Properties -match 'Count')

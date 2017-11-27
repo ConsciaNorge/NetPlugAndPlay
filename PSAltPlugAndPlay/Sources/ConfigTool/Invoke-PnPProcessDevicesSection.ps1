@@ -35,7 +35,7 @@ Function Invoke-PnPProcessDevicesSection {
 
     Process {
         $Config.devices.ForEach({
-            Invoke-ProcessPnPDevice -PnPHost $PnPHost -HostPort $HostPort -DeviceConfig $_ -Force:$Force   
+            Invoke-ProcessPnPDevice -PnPHost $PnPHost -HostPort $HostPort -DeviceConfig $_ -Force:$Force
         })
     }
 }

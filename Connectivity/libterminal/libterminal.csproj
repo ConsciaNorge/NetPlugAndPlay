@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="Pegasus" Version="4.1.0-alpha0007" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pegasus\Pegasus.Common.Core2\Pegasus.Common.Core2.csproj" />
+    <ProjectReference Include="..\SSH.NET\src\Renci.SshNet.NETCore2\Renci.SshNet.NETCore2.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PegGrammar Include="Helpers\Parsers\ShowCDPEntry.peg" />
+  </ItemGroup>
+
+  <Import Project="..\Pegasus\Package\Pegasus.targets" Condition="Exists('..\packages\Pegasus.3.1.2\build\Pegasus.targets')" />
+
+</Project>

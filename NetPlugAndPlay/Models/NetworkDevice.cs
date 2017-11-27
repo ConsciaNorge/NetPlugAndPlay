@@ -20,7 +20,13 @@ namespace NetPlugAndPlay.Models
         public string Description { get; set; }
         [JsonProperty("ipAddress")]
         public string IPAddress { get; set; }
+        [JsonProperty("network")]
+        public string Network { get; set; }
         [JsonProperty("uplinks")]
         public List<NetworkDeviceLink> Uplinks { get; set; }
+        [JsonProperty("dhcpRelay")]
+        public bool DHCPRelay { get; set; }
+        [JsonProperty("dhcpExclusions")]
+        public virtual List<DHCPExclusion> DHCPExclusions { get; set; }
     }
 }

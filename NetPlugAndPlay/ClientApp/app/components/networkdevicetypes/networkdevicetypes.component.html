@@ -4,21 +4,20 @@
 
 <p *ngIf="!networkDeviceTypes"><em>Loading...</em></p>
 
-<table class='table' *ngIf="networkDeviceTypes">
-    <thead>
-        <tr>
-            <th>Hostname</th>
-            <th>Domain name</th>
-            <th>IP Address</th>
-            <th>Device type</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let networkDeviceType of networkDeviceTypes">
-            <td>{{ networkDeviceType.hostname}}</td>
-            <td>{{ networkDeviceType.domainName}}</td>
-            <td>{{ networkDeviceType.ipAddress}}</td>
-            <td>{{ networkDeviceType.deviceType.name}}</td>
-        </tr>
-    </tbody>
-</table>
+<div class="panel-group" *ngIf="networkDeviceTypes">
+    <div class="panel panel-default" *ngFor="let networkDeviceType of networkDeviceTypes">
+        <div class="panel-heading">
+            {{networkDeviceType.name}}
+        </div>
+        <div class="panel-body">
+            <div class="form-group">
+                <label>Manufacturer:</label>
+                <input type="text" [(ngModel)]="networkDeviceType.manufacturer">
+            </div>
+            <div class="form-group">
+                <label>Product ID:</label>
+                <input type="text" [(ngModel)]="networkDeviceType.productId">
+            </div>
+        </div>
+    </div>
+</div>

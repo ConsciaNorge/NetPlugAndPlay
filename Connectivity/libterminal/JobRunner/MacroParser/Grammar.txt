@@ -1,0 +1,30 @@
+﻿parts
+	= part parts
+	| part
+
+part
+	= macro
+	| text
+
+text
+	= (?:(?!\{\{).)+
+
+macro
+	= "{{" WS? expression WS? "}}"
+
+expression
+	= value
+
+Value
+	= Member '.' Value
+	= Member
+
+Member
+	= FunctionCall
+	| Literal
+
+FunctionCall
+	= Literal WS? '(' WS* (Expression WS?) ')'
+
+literal
+	= [A-Za-z_][A-Za-z0-9_]*
