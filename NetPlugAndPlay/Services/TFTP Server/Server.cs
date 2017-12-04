@@ -88,6 +88,18 @@ namespace NetPlugAndPlay.Services.TFTP_Server
             return uplink.NetworkDevice;
         }
 
+        void TransferConfigurationToDevice(IPAddress address)
+        {
+            var uri = new Uri("telnet://initialConfig:Minions12345@" + address.ToString());
+            var copyResult = libterminal.Helpers.TaskCopy.Run(
+                uri,
+                "Minions12345",
+                "tftp://10.100.11.55/config.txt",
+                "foo1.txt"
+            );
+            System.Diagnostics.Debug.WriteLine("Copied config");
+        }
+
         private class RegisteredDevice
         {
             public IPAddress HostAddress { get; set; }
@@ -154,6 +166,7 @@ namespace NetPlugAndPlay.Services.TFTP_Server
             EndPoint client
             )
         {
+            System.Diagnostics.Debug.WriteLine("TFTP request from " + client.ToString() + " for file " + transfer.Filename);
             string connectionString = string.Empty;
 
             try
@@ -235,6 +248,7 @@ namespace NetPlugAndPlay.Services.TFTP_Server
                                 {
                                     System.Diagnostics.Debug.WriteLine("Device " + hostName + " identified as " + cdpMatch.Hostname + "." + cdpMatch.DomainName);
                                     RegisterDeviceMatch((client as IPEndPoint).Address, cdpMatch);
+                                    TransferConfigurationToDevice((client as IPEndPoint).Address);
                                     break;
                                 }
                             }

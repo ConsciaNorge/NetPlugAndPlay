@@ -28,8 +28,46 @@ namespace libterminal.Tasks.Cisco.Compound
                     Name = "ConnectToDevice",
                     Description = "Connect to remote device {{Url(" + Destination +").StripUserInfo}}",
                     Destination = "{{" + Destination + "}}",
-                    OnSuccess = "SendInitialCR",
+                    OnSuccess = "WaitImmediatePrompt",
                     OnFailure = "CriticalError"
+                },
+                new WaitForExpressions
+                {
+                    Name = "WaitImmediatePrompt",
+                    Description = "Wait for initial prompt after login",
+                    Destination = "{{" + Destination + "}}",
+                    OnFailure = "SendInitialCR",
+                    Expressions = new List<WaitForExpression>
+                    {
+                        new WaitForExpression
+                        {
+                            Expression = @"[Pp]ass[Ww]ord\s*:\s*",
+                            Name = "UserPasswordRequest",
+                            Description = "Password prompt for user",
+                            OnSuccess = "SendUserPassword"
+                        },
+                        new WaitForExpression
+                        {
+                            Expression = @"([Uu]ser[Nn]ame\s*:?\s*)|(login\s+as\s*:\s*)",
+                            Name = "UsernameRequest",
+                            Description = "Username requested",
+                            OnSuccess = "SendUsername"
+                        },
+                        new WaitForExpression
+                        {
+                            Expression = @"[\r\n]+" + Constants.Rfc1035Label + @"#\s*",
+                            Name = "PrivExecPrompt",
+                            Description = "Privilege mode prompt received",
+                            OnSuccess = "Done"
+                        },
+                        new WaitForExpression
+                        {
+                            Expression = @"[\r\n]+" + Constants.Rfc1035Label + @">\s*",
+                            Name = "UserExecPrompt",
+                            Description = "User mode prompt received",
+                            OnSuccess = "SendEnable"
+                        }
+                    }
                 },
                 new SendToDevice
                 {

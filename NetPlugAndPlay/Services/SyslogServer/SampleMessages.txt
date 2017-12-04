@@ -1,0 +1,60 @@
+2960 - c2960-lanbasek9-mz.122-40.SE.bin - service timestamps log datetime msec show-timezone
+<189>44: *Mar  8 06:14:46.926 UTC: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+<189>45: *Mar  8 06:17:21.268 UTC: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+2960 - c2960-lanbasek9-mz.122-40.SE.bin - service timestamps log datetime localtime
+<189>46: *Mar  8 06:33:16: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+2960 - c2960-lanbasek9-mz.122-40.SE.bin - service timestamps log datetime show-timezone localtime
+<189>47: *Mar  8 06:34:41 UTC: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+clock timezone CET 1 0
+clock summer-time CEST recurring last Sun Mar 2:00 last Sun Oct 3:00
+2960 - c2960-lanbasek9-mz.122-40.SE.bin - service timestamps log datetime show-timezone localtime
+<190>48: *Mar  8 07:37:07 CET: %SYS-6-CLOCKUPDATE: System clock has been updated from 06:37:07 UTC Mon Mar 8 1993 to 07:37:07 CET Mon Mar 8 1993, configured from console by initialConfig on console.
+<190>49: *Mar  8 07:37:07 CET: %SYS-6-CLOCKUPDATE: System clock has been updated from 07:37:07 CET Mon Mar 8 1993 to 07:37:07 CET Mon Mar 8 1993, configured from console by initialConfig on console.
+<189>50: *Mar  8 07:37:42 CET: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+<189>53: *Mar  8 07:50:31 CET: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+3850 - IOS 16.6.1 - default settings
+<190>100: *Dec  4 14:37:02.130: %SYS-6-LOGGINGHOST_STARTSTOP: Logging to host 10.100.11.55 port 514 (Mgmt-vrf) started - CLI initiated
+<189>101: *Dec  4 14:37:05.961: %SYS-5-CONFIG_I: Configured from console by console
+3850 - IOS 16.6.1 - service timestamps log datetime msec localtime show-timezone year
+<189>102: *Dec  4 2017 14:38:05.988 UTC: %SYS-5-CONFIG_I: Configured from console by console
+<189>103: *Dec  4 2017 14:39:57.292 UTC: %SYS-5-CONFIG_I: Configured from console by console
+3850 - IOS 16.6.1 - service timestamps log datetime msec localtime show-timezone
+<185>88: *Dec  4 15:35:57.664: %Facility_Name-1-Mnemonics_Name: Message from tty0(user id: ): Message_text
+3850 - IOS 16.6.1 - service timestamps log datetime msec localtime show-timezone year (changed date)
+<190>104: *Jan 23 2018 23:23:23.000 UTC: %SYS-6-CLOCKUPDATE: System clock has been updated from 14:40:13 UTC Mon Dec 4 2017 to 23:23:23 UTC Tue Jan 23 2018, configured from console by console.
+<189>105: Jan 23 2018 23:23:27.911 UTC: %SYS-5-CONFIG_I: Configured from console by console
+<188>106: Jan 23 2018 23:24:15.201 UTC: %PLATFORM-4-ELEMENT_WARNING: Switch 1 R0/0: smand:  2/RP/0: limited space - copy files out of flash: directory. flash: value 75% (2521 MB) exceeds warning level 70% (2364 MB)
+<188>107: Jan 23 2018 23:24:23.718 UTC: %PLATFORM-4-ELEMENT_WARNING: Switch 1 R0/0: smand:  1/RP/0: limited space - copy files out of flash: directory. flash: value 75% (2521 MB) exceeds warning level 70% (2364 MB)
+<185>108: Jan 23 2018 23:24:24.020 UTC: %PLATFORM_FEP-1-FRU_PS_ACCESS: Switch 2: power supply B is not responding
+2960 - c2960-lanbasek9-mz.150-2.SE7.bin - service timestamp log datetime msec show-timezone
+<190>114: *Mar  8 15:31:40.504 UTC: %SYS-6-LOGGINGHOST_STARTSTOP: Logging to host 10.100.11.55 port 514 started - CLI initiated
+<189>115: *Mar  8 15:31:47.693 UTC: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+<191>116: *Mar  8 15:31:52.659: Major 1, Minor 0
+<191>117: *Mar  8 15:31:52.659: Timer Event loadConfig
+<191>118: *Mar  8 15:31:52.659: Kron delay for next loadConfig 60000
+<191>119: *Mar  8 15:32:37.530:     Removing Policy Name 'loadConfig'
+<191>120: *Mar  8 15:32:37.530: Finished Removing Occurrence loadConfig
+<189>121: *Mar  8 15:32:38.612 UTC: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+2960 - c2960-lanbasek9-mz.150-2.SE7.bin - service timestamp log datetime msec show-timezone year
+<189>122: *Mar  8 1993 15:34:48.686 UTC: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+2960 - c2960-lanbasek9-mz.150-2.SE7.bin - service timestamp log uptime 
+<190>129: 1w0d: %DHCP-6-ADDRESS_ASSIGN: Interface Vlan1 assigned DHCP address 10.100.16.100, mask 255.255.255.0, hostname 0A641065
+<189>130: 1w0d: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+2960 - c2960-lanbasek9-mz.150-2.SE7.bin - service sequence-numbers
+<189>131: 031844: 1w0d: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+2960 - c2960-lanbasek9-mz.150-2.SE7.bin - service timestamp log datetime msec show-timezone year
+2960 - c2960-lanbasek9-mz.150-2.SE7.bin - service sequence-numbers
+<189>132: 031845: *Mar  8 1993 15:44:46.710 UTC: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+2960 - c2960-lanbasek9-mz.150-2.SE7.bin - service timestamp log datetime msec show-timezone year
+2960 - c2960-lanbasek9-mz.150-2.SE7.bin - service sequence-numbers
+2960 - c2960-lanbasek9-mz.150-2.SE7.bin - logging origin-id string 
+<189>133: TEXT_STRING: 031846: *Mar  8 1993 15:46:25.402 UTC: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+<189>134: logging_origin-id_string: 031847: *Mar  8 1993 15:47:43.005 UTC: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+<189>135: logging_origin-id_string: 031848: *Mar  8 1993 15:51:45.075 UTC: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+<189>136: logging_origin-id_string: 031849: *Mar  8 1993 15:52:05.711 UTC: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+<191>137: logging_origin-id_string: 031850: *Dec  4 15:22:08.831: Clock Set Seen
+<189>138: logging_origin-id_string: 031851: *Dec  4 2017 15:22:56.948 UTC: %SYS-5-CONFIG_I: Configured from console by initialConfig on consol
+<189>139: logging_origin-id_string: 031852: Dec  4 2017 15:25:25.762 UTC: %SYS-5-CONFIG_I: Configured from console by initialConfig on console
+<191>141: logging_origin-id_string: 031860: Dec  4 2017 15:35:59.086 UTC: %SYS-7-USERLOG_DEBUG: Message from tty0(user id: initialConfig): TEST
+<191>142: logging_origin-id_string: 031861: Dec  4 15:37:49.925: %syslog-7-TEXT_mnemonics: Message from tty0(user id: initialConfig): Message_text
+<190>147: logging_origin-id_string: 031866: .Dec  4 2017 15:44:34.064 UTC: %DHCP-6-ADDRESS_ASSIGN: Interface Vlan1 assigned DHCP address 10.100.16.100, mask 255.255.255.0, hostname 0A641065
