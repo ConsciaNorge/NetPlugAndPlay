@@ -16,6 +16,8 @@ namespace NetPlugAndPlay.Services.DHCP_Server
 {
     public class Server
     {
+        public Func<object, IPReleasedEventArgs, Task> OnIPReleased;
+
         private static Server s_instance = null;
         DHCPServer _dhcpServer;
         DHCPPoolManager PoolManager { get; set; } = new DHCPPoolManager();
@@ -37,8 +39,50 @@ namespace NetPlugAndPlay.Services.DHCP_Server
             {
                 return await GenerateLease(discovery, localEndPoint, remoteEndPoint);
             });
+            _dhcpServer.OnDHCPRelease += new DHCPServer.DHCPProcessDelegate(async (packet, localEndPoint, remoteEndPoint) =>
+            {
+                return await ReleaseLease(packet, localEndPoint, remoteEndPoint);
+            });
 
             Task.Factory.StartNew(async () => { await _dhcpServer.Start(); });
+        }
+
+        private async Task<DHCPPacketView> ReleaseLease(DHCPPacketView packet, IPEndPoint localEndPoint, IPEndPoint remoteEndPoint)
+        {
+            if(!DHCPClients.ReleaseClient(packet, localEndPoint, remoteEndPoint))
+                System.Diagnostics.Debug.WriteLine("No known client registered for client : " + packet.ClientId.ToString());
+
+            lock (PoolManager)
+            {
+                if (!PoolManager.ReleaseLease(packet, localEndPoint, remoteEndPoint))
+                {
+                    System.Diagnostics.Debug.WriteLine("Failed to process DHCP release packet for client ID " + packet.ClientId.ToString() + " received from " + remoteEndPoint.ToString());
+                    return null;
+                }
+            }
+
+            if (OnIPReleased != null)
+            {
+                Delegate[] invocationList = OnIPReleased.GetInvocationList();
+                Task[] onForgetIPAddressTasks = new Task[invocationList.Length];
+
+                for (int i = 0; i < invocationList.Length; i++)
+                {
+                    try
+                    {
+                        onForgetIPAddressTasks[i] = ((Func<object, IPReleasedEventArgs, Task>)invocationList[i])(this, new IPReleasedEventArgs { Address = packet.ClientIP });
+                    }
+                    catch(Exception e)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Exception thrown while informing other tasks of DHCP released IP " + packet.ClientIP.ToString() + " - " + e.Message);
+                    }
+                }
+
+                await Task.WhenAll(onForgetIPAddressTasks);
+            }
+
+            // DHCP Release does not appear to require an ACK.
+            return null;
         }
 
         private List<IPAddress> GetDNSServers()
@@ -107,7 +151,7 @@ namespace NetPlugAndPlay.Services.DHCP_Server
             {
                 try
                 {
-                    lease = PoolManager.ReserveByRelayAddress(remoteEndPoint, request.ClientId.GetBytes(), request.TransactionId);
+                    lease = PoolManager.ReserveByRelayAddress(remoteEndPoint, request.ClientId, request.TransactionId);
                 }
                 catch(Exception e)
                 {

@@ -37,6 +37,9 @@ namespace NetPlugAndPlay.Services.SyslogServer
         IPEndPoint listenerEndpoint;
         UdpClient listener;
 
+        public Func<object, SyslogMessageEventArgs, Task> OnSyslogMessage;
+        //public EventHandler<SyslogMessageEventArgs> OnSyslogMessage;
+
         private static SyslogServer Instance { get; set; }
 
         public SyslogServer()
@@ -63,7 +66,7 @@ namespace NetPlugAndPlay.Services.SyslogServer
 
                     if (completedTask == readTask)
                     {
-                        ProcessReceivedPacket(readTask.Result.Buffer, readTask.Result.RemoteEndPoint);
+                        await ProcessReceivedPacket(readTask.Result.Buffer, readTask.Result.RemoteEndPoint);
                     }
                     else
                     {
@@ -78,11 +81,21 @@ namespace NetPlugAndPlay.Services.SyslogServer
             }
         }
 
-        public bool ProcessReceivedPacket(byte[] buffer, IPEndPoint remoteEndPoint)
+        public async Task<bool> ProcessReceivedPacket(byte[] buffer, IPEndPoint remoteEndPoint)
         {
-            System.Diagnostics.Debug.WriteLine("Buffer received from " + remoteEndPoint.ToString() + " with length " + buffer.Length);
-
             var message = Encoding.ASCII.GetString(buffer, 0, buffer.Length);
+            System.Diagnostics.Debug.WriteLine("Buffer received from " + remoteEndPoint.ToString() + " - " + message);
+
+            if (OnSyslogMessage == null)
+                return false;
+
+            Delegate[] invocationList = OnSyslogMessage.GetInvocationList();
+            Task[] onSyslogMessageTasks = new Task[invocationList.Length];
+
+            for (int i = 0; i < invocationList.Length; i++)
+                onSyslogMessageTasks[i] = ((Func<object, SyslogMessageEventArgs, Task>)invocationList[i]) (this, new SyslogMessageEventArgs { Host = remoteEndPoint, Message = message });
+
+            await Task.WhenAll(onSyslogMessageTasks);
 
             return true;
         }

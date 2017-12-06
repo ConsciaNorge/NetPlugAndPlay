@@ -30,7 +30,7 @@ ip dhcp snooping information option format remote-id string $deviceId
 
 vtp domain demo
 vtp mode transparent
-crypto key generate rsa general-keys modulus 2048
+crypto key generate rsa general-keys modulus 1024
 dot1x system-auth-control
 !
 spanning-tree mode rapid-pvst
@@ -86,7 +86,7 @@ macro name demo
 description __demo_PROD_LAN__
 switchport access vlan 100
 switchport mode access
-no logging event link-status
+!no logging event link-status
 no snmp trap link-status
 no cdp enable
 spanning-tree portfast
@@ -97,7 +97,7 @@ macro name wifi
 description __demo_WIFI_LAN__
 switchport access vlan 30
 switchport mode access
-no logging event link-status
+!no logging event link-status
 no snmp trap link-status
 spanning-tree portfast
 power inline consumption 15400
@@ -108,7 +108,7 @@ macro name voice_102
 description __demo_VOICE_LAN__
 switchport access vlan 102
 switchport mode access
-no logging event link-status
+!no logging event link-status
 no snmp trap link-status
 no cdp enable
 spanning-tree portfast
@@ -120,7 +120,7 @@ macro name voice_112
 description __demo_KS-VOICE_LAN__
 switchport access vlan 112
 switchport mode access
-no logging event link-status
+!no logging event link-status
 no snmp trap link-status
 no cdp enable
 spanning-tree portfast
@@ -132,7 +132,7 @@ macro name voice_122
 description __demo_FV-VOICE_LAN__
 switchport access vlan 122
 switchport mode access
-no logging event link-status
+!no logging event link-status
 no snmp trap link-status
 no cdp enable
 spanning-tree portfast
@@ -148,7 +148,7 @@ switchport port-security
 switchport port-security maximum 1
 switchport port-security aging time 240
 switchport port-security violation protect
-no logging event link-status
+!no logging event link-status
 no snmp trap link-status
 no cdp enable
 spanning-tree portfast
@@ -159,7 +159,7 @@ macro name video
 description __demo_VIDEO_LAN__
 switchport access vlan 103
 switchport mode access
-no logging event link-status
+!no logging event link-status
 no snmp trap link-status
 no cdp enable
 spanning-tree portfast
@@ -219,7 +219,6 @@ ip dhcp snooping trust
  interface GigaBitEthernet0/1
  description __MOT_SWITCH__
  switchport mode trunk
- switchport nonegotiate
  switchport trunk allowed vlan all
 ip dhcp snooping trust
  no shutdown
@@ -228,7 +227,6 @@ ip dhcp snooping trust
  interface GigaBitEthernet0/2
  description __MOT_SWITCH__
  switchport mode trunk
- switchport nonegotiate
  switchport trunk allowed vlan all
 ip dhcp snooping trust
  no shutdown
@@ -248,8 +246,7 @@ ip default-gateway $defaultGateway
 no ip http server
 no ip http secure-server
 logging trap notifications
-logging 10.54.204.110
-logging 10.54.248.110
+logging 10.100.11.55
 !
 access-list 1 remark __For ssh tilgang__
 access-list 1 permit 10.100.0.0 0.0.255.255
@@ -326,8 +323,7 @@ exec-timeout 15 0
 privilege level 15
 transport input telnet ssh
 !
-ntp server 10.65.0.1 prefer
-ntp server 10.65.0.2
+ntp server 10.100.1.1 prefer
 !
 aaa authentication login default  local
 aaa authentication enable default enable
@@ -337,5 +333,8 @@ aaa authorization exec default  none
 !aaa accounting commands 15 default start-stop group tacacs+
 !aaa authorization commands 1 default group tacacs+ if-authenticated
 !aaa authorization commands 15 default group tacacs+ if-authenticated
+
+no kron occurrence loadConfig in 1 recurring
+no kron policy-list loadConfig
 !
 end

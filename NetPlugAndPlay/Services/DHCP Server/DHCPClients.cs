@@ -11,6 +11,26 @@ namespace NetPlugAndPlay.Services.DHCP_Server
     {
         private static List<DHCPClient> KnownClients { get; set; } = new List<DHCPClient>();
 
+        public static bool ReleaseClient(DHCPPacketView packet, IPEndPoint localEndPoint, IPEndPoint remoteEndPoint)
+        {
+            lock(KnownClients)
+            {
+                var count = KnownClients
+                    .RemoveAll(x =>
+                        x.ClientId.Equals(packet.ClientId)
+                    );
+
+                if (count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("Received DHCP release for client ID " + packet.ClientId.ToString() + " but could not find a corresponding lease");
+                    return false;
+                }
+
+                System.Diagnostics.Debug.WriteLine("Received DHCP release for client ID " + packet.ClientId.ToString() + " and processed successfully");
+                return true;
+            }
+        }
+
         public static DHCPClient FindKnownClient(DHCPPacketView request, IPEndPoint localEndPoint, IPEndPoint remoteEndPoint)
         {
             DHCPClient result = null;

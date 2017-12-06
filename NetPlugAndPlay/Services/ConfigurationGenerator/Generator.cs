@@ -129,6 +129,7 @@ namespace NetPlugAndPlay.Services.ConfigurationGenerator
             if (relayDevice != null)
                 context.Put("domainName", relayDevice.DomainName);
             context.Put("tftpServer", address.SourceIP());
+            context.Put("deviceReadyMessage", DeviceConfigurator.DeviceConfigurator.DeviceConfiguredLogMessage);
 
             context.Put("esc", new NVelocityRuntime.CiscoEsc());
 

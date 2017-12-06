@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -35,6 +36,18 @@ namespace libterminal
             {
                 Connections.Remove(connection);
                 // TODO : make connection disposable
+            }
+        }
+
+        public bool RemoveConnectionsByHost(string hostname)
+        {
+            lock(this)
+            {
+                int count = Connections.RemoveAll(x =>
+                    x.Destination.Host == hostname
+                );
+
+                return count > 0;
             }
         }
 

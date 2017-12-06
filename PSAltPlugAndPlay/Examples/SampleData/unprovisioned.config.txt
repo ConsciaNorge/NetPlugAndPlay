@@ -27,8 +27,11 @@ line vty 0 15
  transport input telnet
  access-class ACL_CDP_SNOOPER in
 !
+logging host 10.100.11.55
+logging trap 7
+!
 kron policy-list loadConfig
- cli copy tftp://$tftpServer/config.txt flash:biteme.txt
+ cli send log $deviceReadyMessage
 !
 kron occurrence loadConfig in 1 recurring
  policy-list loadConfig
