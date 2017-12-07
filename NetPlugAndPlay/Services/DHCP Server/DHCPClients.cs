@@ -1,4 +1,5 @@
 ﻿using LibDHCPServer;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,11 +23,11 @@ namespace NetPlugAndPlay.Services.DHCP_Server
 
                 if (count == 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("Received DHCP release for client ID " + packet.ClientId.ToString() + " but could not find a corresponding lease");
+                    Log.Debug("Received DHCP release for client ID " + packet.ClientId.ToString() + " but could not find a corresponding lease");
                     return false;
                 }
 
-                System.Diagnostics.Debug.WriteLine("Received DHCP release for client ID " + packet.ClientId.ToString() + " and processed successfully");
+                Log.Information("Received DHCP release for client ID " + packet.ClientId.ToString() + " and processed successfully");
                 return true;
             }
         }

@@ -20,9 +20,8 @@
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 /// SOFTWARE.
 
+using Serilog;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -38,12 +37,12 @@ namespace NetPlugAndPlay.Services.SyslogServer
         UdpClient listener;
 
         public Func<object, SyslogMessageEventArgs, Task> OnSyslogMessage;
-        //public EventHandler<SyslogMessageEventArgs> OnSyslogMessage;
 
         private static SyslogServer Instance { get; set; }
 
         public SyslogServer()
         {
+            Log.Information("Starting Syslog Server");
             if (Instance != null)
                 throw new Exception("There can only be one syslog server instance running at a time");
 
@@ -65,18 +64,14 @@ namespace NetPlugAndPlay.Services.SyslogServer
                     var completedTask = await Task.WhenAny(readTask).ConfigureAwait(false);
 
                     if (completedTask == readTask)
-                    {
                         await ProcessReceivedPacket(readTask.Result.Buffer, readTask.Result.RemoteEndPoint);
-                    }
                     else
-                    {
                         return false;
-                    }
                 }
             }
             catch (Exception e)
             {
-                System.Diagnostics.Debug.WriteLine(e.Message);
+                Log.Error(e, "Syslog packet failure");
                 return false;
             }
         }
@@ -84,7 +79,7 @@ namespace NetPlugAndPlay.Services.SyslogServer
         public async Task<bool> ProcessReceivedPacket(byte[] buffer, IPEndPoint remoteEndPoint)
         {
             var message = Encoding.ASCII.GetString(buffer, 0, buffer.Length);
-            System.Diagnostics.Debug.WriteLine("Buffer received from " + remoteEndPoint.ToString() + " - " + message);
+            Log.Information("Syslog message received from " + remoteEndPoint.ToString() + " - " + message);
 
             if (OnSyslogMessage == null)
                 return false;
@@ -98,42 +93,6 @@ namespace NetPlugAndPlay.Services.SyslogServer
             await Task.WhenAll(onSyslogMessageTasks);
 
             return true;
-        }
-
-        private Dictionary<IPAddress, IPAddress> RouteCache = new Dictionary<IPAddress, IPAddress>();
-
-        private IPAddress QueryRoutingInterface(
-            IPAddress remoteIp)
-        {
-            IPAddress result;
-            if (!RouteCache.TryGetValue(remoteIp, out result))
-            {
-                var remoteEndPoint = new IPEndPoint(remoteIp, 0);
-                var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-
-                result = QueryRoutingInterface(socket, remoteEndPoint).Address;
-                RouteCache.Add(remoteIp, result);
-            }
-            return result;
-        }
-
-        private IPEndPoint QueryRoutingInterface(
-                  Socket socket,
-                  IPEndPoint remoteEndPoint)
-        {
-            var socketAddress = remoteEndPoint.Serialize();
-
-            var remoteAddressBytes = new byte[socketAddress.Size];
-            for (int i = 0; i < socketAddress.Size; i++)
-                remoteAddressBytes[i] = socketAddress[i];
-
-            var outBytes = new byte[remoteAddressBytes.Length];
-            socket.IOControl(IOControlCode.RoutingInterfaceQuery, remoteAddressBytes, outBytes);
-
-            for (int i = 0; i < socketAddress.Size; i++)
-                socketAddress[i] = outBytes[i];
-
-            return (IPEndPoint)remoteEndPoint.Create(socketAddress);
         }
     }
 }

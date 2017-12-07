@@ -1,4 +1,5 @@
 ﻿using NetPlugAndPlay.Models;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,7 +57,7 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                 var now = DateTimeOffset.Now;
                 Devices.RemoveAll(x => x.TimeExpires <= now);
 
-                System.Diagnostics.Debug.WriteLine("Finding registered device " + deviceAddress.ToString());
+                Log.Debug("Finding registered device " + deviceAddress.ToString());
                 var match = Devices
                     .Where(x =>
                         x.HostAddress.Equals(deviceAddress)
@@ -65,10 +66,10 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
 
                 if (match == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("Didn't find registered device " + deviceAddress.ToString());
+                    Log.Debug("Didn't find registered device " + deviceAddress.ToString());
                     return Guid.Empty;
                 }
-                System.Diagnostics.Debug.WriteLine("Found registered device " + deviceAddress.ToString() + " as " + match.NetworkDeviceId.ToString());
+                Log.Debug("Found registered device " + deviceAddress.ToString() + " as " + match.NetworkDeviceId.ToString());
 
                 match.TimeExpires = now.Add(TimeSpan.FromSeconds(300));
 

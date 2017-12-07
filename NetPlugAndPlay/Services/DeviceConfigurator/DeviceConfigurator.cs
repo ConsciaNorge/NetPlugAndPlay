@@ -11,12 +11,52 @@ using System.Net;
 using System.Threading.Tasks;
 using NetPlugAndPlay.Services.DHCP_Server;
 using libterminal;
+using Serilog;
+using NetPlugAndPlay.Services.Common.NetworkTools;
 
 namespace NetPlugAndPlay.Services.DeviceConfigurator
 {
     public partial class DeviceConfigurator
     {
-        public static string DeviceConfiguredLogMessage = "Device configured";
+        public static string DeviceConfiguredLogMessage
+        {
+            get
+            {
+                try { return Startup.Configuration.GetSection("AppConfiguration:Automation")["DeviceConfiguredLogMessage"]; }
+                catch (Exception e) { Log.Error(e, "Premature use of application configuration"); }
+                return string.Empty;
+            }
+        }
+
+        string TelnetUsername
+        {
+            get
+            {
+                try { return Startup.Configuration.GetSection("AppConfiguration:TelnetControl")["Username"]; }
+                catch (Exception e) { Log.Error(e, "Premature use of application configuration"); }
+                return string.Empty;
+            }
+        }
+
+        string TelnetPassword
+        {
+            get
+            {
+                try { return Startup.Configuration.GetSection("AppConfiguration:TelnetControl")["Password"]; }
+                catch (Exception e) { Log.Error(e, "Premature use of application configuration"); }
+                return string.Empty;
+            }
+        }
+
+        string TelnetEnablePassword
+        {
+            get
+            {
+                try { return Startup.Configuration.GetSection("AppConfiguration:TelnetControl")["EnablePassword"]; }
+                catch (Exception e) { Log.Error(e, "Premature use of application configuration"); }
+                return string.Empty;
+            }
+        }
 
         private string GetPhysicalInterfaceName(string interfaceName)
         {
@@ -31,6 +71,8 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
 
         private async Task<NetworkDevice> MatchCDPEntry(PnPServerContext dbContext, ShowCDPEntryItem cdpEntry)
         {
+            Log.Information("Attempting to identify what is connected to [" + cdpEntry.DeviceID + "] interface [" + cdpEntry.PortId + "]");
+            Log.Debug("Looking for " + cdpEntry.DeviceID);
             var deviceId = cdpEntry.DeviceID.ToLowerInvariant();
 
             var neighborDevice = await dbContext.NetworkDevices
@@ -43,9 +85,14 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                 .FirstOrDefaultAsync();
 
             if (neighborDevice == null)
+            {
+                Log.Debug(cdpEntry.DeviceID + " not found in the configuration database");
                 return null;
+            }
 
+            Log.Debug("Looking for " + cdpEntry.PortId);
             var remotePortId = GetPhysicalInterfaceName(cdpEntry.PortId.ToLowerInvariant());
+            Log.Debug("Looking for " + remotePortId + " (mutated for search)");
 
             var remoteInterface = neighborDevice.DeviceType.Interfaces
                 .Where(x =>
@@ -54,7 +101,11 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                 .FirstOrDefault();
 
             if (remoteInterface == null)
+            {
+                Log.Debug(cdpEntry.PortId + " not found in the configuration database for the device type " + neighborDevice.DeviceType.ProductId);
                 return null;
+            }
+            Log.Debug(cdpEntry.PortId + " on device type " + neighborDevice.DeviceType.ProductId + " is SNMP index " + remoteInterface.InterfaceIndex + " resolving uplink");
 
             var uplink = await dbContext.NetworkDeviceLinks
                 .Where(x =>
@@ -65,37 +116,45 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                 .FirstOrDefaultAsync();
 
             if (uplink == null)
+            {
+                Log.Debug(cdpEntry.DeviceID + " on interface " + cdpEntry.PortId + " could not be located in the configuration database");
                 return null;
+            }
 
+            Log.Information(cdpEntry.DeviceID + " on interface " + cdpEntry.PortId + " is connected to " + uplink.NetworkDevice.Hostname + "." + uplink.NetworkDevice.DomainName);
             return uplink.NetworkDevice;
         }
 
         internal Task ForgetIP(object sender, IPReleasedEventArgs ev)
         {
             return Task.Run(() => {
-                System.Diagnostics.Debug.WriteLine("Unregistering device with IP " + ev.Address.ToString() + " from device manager");
+                Log.Information("Unregistering device with IP " + ev.Address.ToString() + " from device manager");
                 if (RegisteredDevices.UnregisterDevice(ev.Address))
-                    System.Diagnostics.Debug.WriteLine("Device with IP " + ev.Address.ToString() + " successfully unregistered from device manager");
+                    Log.Information("Device with IP " + ev.Address.ToString() + " successfully unregistered from device manager");
                 else
-                    System.Diagnostics.Debug.WriteLine("Device with IP " + ev.Address.ToString() + " either was not registered with device manager or could not be unregistered");
+                    Log.Warning("Device with IP " + ev.Address.ToString() + " either was not registered with device manager or could not be unregistered");
 
                 if (ConnectionManager.Instance.RemoveConnectionsByHost(ev.Address.ToString()))
-                    System.Diagnostics.Debug.WriteLine("Closed telnet and ssh connections to " + ev.Address.ToString());
+                    Log.Information("Closed telnet and ssh connections to " + ev.Address.ToString());
                 else
-                    System.Diagnostics.Debug.WriteLine("No telnet or ssh connections were closed to " + ev.Address.ToString());
+                    Log.Debug("No telnet or ssh connections were closed to " + ev.Address.ToString());
             });
         }
 
         void TransferConfigurationToDevice(IPAddress address)
         {
-            var uri = new Uri("telnet://initialConfig:Minions12345@" + address.ToString());
+            var localAddress = LocalRoutingTable.QueryRoutingInterface(address);
+            var userInfo = TelnetUsername + ":" + TelnetPassword;
+
+            // TODO : AppSettings
+            var uri = new Uri("telnet://" + userInfo + "@" + address.ToString());
             var copyResult = libterminal.Helpers.TaskCopy.Run(
                 uri,
-                "Minions12345",
-                "tftp://10.100.11.55/config.txt",
+                TelnetEnablePassword,
+                "tftp://" + localAddress.ToString() + "/config.txt",
                 "running-config"
             );
-            System.Diagnostics.Debug.WriteLine("Copied config");
+            Log.Information("Copied configuration to " + address.ToString());
         }
 
         public async Task SyslogMessageHandler(object sender, SyslogMessageEventArgs args)
@@ -106,20 +165,20 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                 // TODO : Make sure that this code doesn't run until the startup is complete
                 connectionString = Startup.Configuration.GetValue<string>("Data:DefaultConnection:ConnectionString");
             }
-            catch
+            catch(Exception e)
             {
-                System.Diagnostics.Debug.WriteLine("Failed to get database connection string");
+                Log.Error(e, "Failed to get database connection string");
                 return;
             }
 
             if (!args.Message.Contains(DeviceConfiguredLogMessage))
                 return;
 
-            System.Diagnostics.Debug.WriteLine("Device : " + args.Host.ToString() + " signaled it is ready to be identified");
+            Log.Information("Device : " + args.Host.ToString() + " signaled it is ready to be identified");
 
             if (!await IdentifyDevice(args.Host))
             {
-                System.Diagnostics.Debug.WriteLine("Failed to identify device : " + args.Host.ToString() + " as CDP neighbors either cannot be resolved or are unknown.");
+                Log.Information("Failed to identify device : " + args.Host.ToString() + " as CDP neighbors either cannot be resolved or are unknown.");
                 return;
             }
 
@@ -134,9 +193,9 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                 // TODO : Make sure that this code doesn't run until the startup is complete
                 connectionString = Startup.Configuration.GetValue<string>("Data:DefaultConnection:ConnectionString");
             }
-            catch
+            catch(Exception e)
             {
-                System.Diagnostics.Debug.WriteLine("Failed to get database connection string");
+                Log.Error(e, "Failed to get database connection string");
                 return false;
             }
 
@@ -149,21 +208,21 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
             if (client.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
                 hostName = (client as IPEndPoint).Address.ToString();
             else
-            {
                 throw new Exception("Address family not supported");
-            }
-            var uri = new Uri("telnet://initialConfig:Minions12345@" + hostName);
+
+            var userInfo = TelnetUsername + ":" + TelnetPassword;
+            var uri = new Uri("telnet://" + userInfo + "@" + hostName);
 
             var entriesText = libterminal.Helpers.TaskShowCDPEntries.Run(
                 uri,
-                "Minions12345"
+                TelnetEnablePassword
             );
 
             if (string.IsNullOrWhiteSpace(entriesText))
-                System.Diagnostics.Debug.WriteLine("Received null or whitespace result to 'show cdp entries *'");
+                Log.Error("Received null or whitespace result to 'show cdp entries *'\n" + entriesText);
             else
             {
-                System.Diagnostics.Debug.WriteLine("Received CDP entries");
+                Log.Debug("Received CDP entries");
                 var parser = new ShowCDPEntry();
                 List<ShowCDPEntryItem> entries = null;
                 try
@@ -172,19 +231,19 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                 }
                 catch (Exception e)
                 {
-                    System.Diagnostics.Debug.WriteLine("Failed to parse CDP entries : " + e.Message);
+                    Log.Error(e, "Failed to parse CDP entries");
                     return false;
                 }
 
                 if (entries != null)
                 {
-                    System.Diagnostics.Debug.WriteLine("Found " + entries.Count.ToString() + " when querying device " + client.ToString());
+                    Log.Information("Found " + entries.Count.ToString() + " when querying device " + client.ToString());
                     foreach (var entry in entries)
                     {
                         var cdpMatch = await MatchCDPEntry(dbContext, entry);
                         if (cdpMatch != null)
                         {
-                            System.Diagnostics.Debug.WriteLine("Device " + hostName + " identified as " + cdpMatch.Hostname + "." + cdpMatch.DomainName);
+                            Log.Information("Device " + hostName + " identified as " + cdpMatch.Hostname + "." + cdpMatch.DomainName);
                             RegisteredDevices.Match((client as IPEndPoint).Address, cdpMatch);
                             TransferConfigurationToDevice((client as IPEndPoint).Address);
                             return true;
@@ -193,7 +252,7 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine("Failed to identify device");
+            Log.Information("Failed to identify device " + client.ToString());
             return false;
         }
     }
