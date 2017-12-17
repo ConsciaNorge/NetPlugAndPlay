@@ -19,9 +19,14 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
         {
             var name = Request.Query["name"];
             if(!string.IsNullOrEmpty(name))
-                return await dbContext.NetworkDeviceTypes.Where(x => x.Name == name).ToListAsync();
+                return await dbContext.NetworkDeviceTypes
+                    .Where(x => x.Name == name)
+                    .Include("Interfaces")
+                    .ToListAsync();
 
-            return await dbContext.NetworkDeviceTypes.ToListAsync();
+            return await dbContext.NetworkDeviceTypes
+                .Include("Interfaces")
+                .ToListAsync();
         }
 
         // GET api/values/5

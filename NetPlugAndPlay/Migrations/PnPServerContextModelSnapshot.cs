@@ -45,6 +45,8 @@ namespace NetPlugAndPlay.Migrations
 
                     b.Property<bool>("DHCPRelay");
 
+                    b.Property<string>("DHCPTftpBootfile");
+
                     b.Property<string>("Description");
 
                     b.Property<Guid?>("DeviceTypeId");

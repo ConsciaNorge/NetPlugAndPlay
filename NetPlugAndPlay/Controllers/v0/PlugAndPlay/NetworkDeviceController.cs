@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using NetPlugAndPlay.Models;
+using NetPlugAndPlay.Services.DeviceConfigurator;
+using Newtonsoft.Json;
+using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using NetPlugAndPlay.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Primitives;
-using System.Text;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -31,7 +32,10 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
             else if (!string.IsNullOrEmpty(domainName))
                 return await dbContext.NetworkDevices.Where(x => x.DomainName == domainName).Include("DeviceType").ToListAsync();
 
-            return await dbContext.NetworkDevices.Include("DeviceType").ToListAsync();
+            return await dbContext.NetworkDevices
+                .Include("DeviceType")
+                .Include("Uplinks")
+                .ToListAsync();
         }
 
         // GET api/values/5
@@ -43,6 +47,7 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
         {
             var item = await dbContext.NetworkDevices
                 .Include("DeviceType")
+                .Include("Uplinks")
                 .Where(x => x.Id == id)
                 .FirstOrDefaultAsync();
             if (item == null)
@@ -60,12 +65,11 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
                 [FromBody] NetworkDevice networkDevice
             )
         {
-            var buf = new byte[Request.Body.Length];
-            Request.Body.Seek(0, System.IO.SeekOrigin.Begin);
-            Request.Body.Read(buf, 0, buf.Length);
-            var text = Encoding.ASCII.GetString(buf);
+            Log.Logger.Here().Debug("POST " + Url.ToString() + " called from " + HttpContext.Connection.RemoteIpAddress.ToString());
+
             if (networkDevice == null || networkDevice.DeviceType == null || networkDevice.DeviceType.Id == null)
             {
+                Log.Logger.Here().Debug("POST " + Url.ToString() + " network device of invalid format");
                 return BadRequest();
             }
 
@@ -78,21 +82,25 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
 
             if (existingRecord != null)
             {
-                System.Diagnostics.Debug.WriteLine("Network device with name " + networkDevice.Hostname + "." + networkDevice.DomainName + " already exists");
+                Log.Logger.Here().Error("Network device with name " + networkDevice.Hostname + "." + networkDevice.DomainName + " already exists");
                 return BadRequest();
             }
 
             var networkDeviceType = await dbContext.NetworkDeviceTypes.FindAsync(networkDevice.DeviceType.Id);
             if(networkDeviceType == null)
             {
-                System.Diagnostics.Debug.WriteLine("Network device type " + networkDevice.DeviceType.Id.ToString() + " does not exist");
+                Log.Logger.Here().Error("Network device type " + networkDevice.DeviceType.Id.ToString() + " does not exist");
                 return BadRequest();
             }
+
+            // TODO : Validate there are no duplicates in DHCP exclusions
 
             networkDevice.DeviceType = networkDeviceType;
 
             await dbContext.NetworkDevices.AddAsync(networkDevice);
             await dbContext.SaveChangesAsync();
+
+            await DeviceConfigurator.NetworkDeviceAdded(networkDevice);
 
             return new CreatedAtRouteResult("GetNetworkDevice", new { id = networkDevice.Id }, networkDevice);
         }
@@ -105,12 +113,25 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
                 [FromBody] NetworkDevice networkDevice
             )
         {
-            var item = await dbContext.NetworkDevices.Where(x => x.Id == id).Include("DeviceType").FirstOrDefaultAsync();
+            Log.Logger.Here().Debug("PUT " + Url.ToString() + " called from " + HttpContext.Connection.RemoteIpAddress.ToString());
+
+            var item = await dbContext.NetworkDevices
+                .Where(x => 
+                    x.Id == id
+                )
+                .Include("DeviceType")
+                .Include("DHCPExclusions")
+                .FirstOrDefaultAsync();
+
             if (item == null)
                 return NotFound();
 
+            var changes = new NetworkDeviceChanges(item);
+
             item.Hostname = networkDevice.Hostname;
             item.DomainName = networkDevice.DomainName;
+
+            // TODO : Validate there are no duplicates in DHCP exclusions
 
             if (item.DeviceType.Id != networkDevice.DeviceType.Id)
             {
@@ -123,9 +144,62 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
             }
             item.Description = networkDevice.Description;
             item.IPAddress = networkDevice.IPAddress;
+            item.DHCPRelay = networkDevice.DHCPRelay;
+            item.DHCPTftpBootfile = networkDevice.DHCPTftpBootfile;
+
+            if (networkDevice.DHCPExclusions == null && item.DHCPExclusions != null)
+            {
+                Log.Logger.Here().Debug("Removing all DHCP exclusions from " + networkDevice.Hostname + "." + networkDevice.DomainName);
+                item.DHCPExclusions.RemoveAll(x => true);
+            }
+            else if(networkDevice.DHCPExclusions != null)
+            {
+                if (item.DHCPExclusions == null)
+                {
+                    Log.Logger.Here().Debug(networkDevice.Hostname + "." + networkDevice.DomainName + " had no exclusions and now has some");
+                    item.DHCPExclusions = networkDevice.DHCPExclusions;
+                }
+                else
+                {
+                    Log.Logger.Here().Debug(networkDevice.Hostname + "." + networkDevice.DomainName + " removing exclusions");
+                    var removed = item.DHCPExclusions
+                        .RemoveAll(x =>
+                            networkDevice.DHCPExclusions
+                                .Where(y =>
+                                    y.Start.Equals(x.Start) &&
+                                    y.End.Equals(x.End)
+                                )
+                                .Count() == 0
+                        );
+                    Log.Logger.Here().Debug(networkDevice.Hostname + "." + networkDevice.DomainName + " removed " + removed.ToString() + " exclusions");
+
+                    Log.Logger.Here().Debug(networkDevice.Hostname + "." + networkDevice.DomainName + " adding new exclusions");
+                    var addedItems = networkDevice.DHCPExclusions
+                        .Where(x =>
+                            item.DHCPExclusions
+                                .Where(y =>
+                                    y.Start.Equals(x.Start) &&
+                                    y.End.Equals(x.End)
+                                )
+                                .Count() == 0
+                        )
+                        .ToList();
+
+                    Log.Logger.Here().Debug(networkDevice.Hostname + "." + networkDevice.DomainName + " found " + addedItems.Count + " item to add");
+
+                    dbContext.AddRange(addedItems);
+                    item.DHCPExclusions.AddRange(addedItems);
+
+                    Log.Logger.Here().Debug(networkDevice.Hostname + "." + networkDevice.DomainName + " added " + addedItems.Count + " items");
+                }
+            }
 
             dbContext.NetworkDevices.Update(item);
             await dbContext.SaveChangesAsync();
+
+            changes.Current = item;
+            if (changes.IsChanged)
+                await DeviceConfigurator.NetworkDeviceChanged(changes);
 
             return new ObjectResult(item);
         }
@@ -162,6 +236,63 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
             return new ObjectResult(new { text = config });
         }
 
+        public class NetworkDeviceTemplateViewModel
+        {
+            [JsonProperty("id")]
+            public Guid Id { get; set; }
+            [JsonProperty("name")]
+            public string Name { get; set; }
+            [JsonProperty("description")]
+            public string Description { get; set; }
+            [JsonProperty("parameters")]
+            public virtual List<TemplateProperty> Parameters { get; set; }
+        }
+
+        public class NetworkDeviceReportViewModel : NetworkDevice
+        {
+            [JsonProperty("template")]
+            public NetworkDeviceTemplateViewModel Template { get; set; }
+        }
+
+        [HttpGet("report")]
+        public async Task<IActionResult> GetNetworkDeviceReport(
+                [FromServices] PnPServerContext dbContext
+            )
+        {
+            var result = await (
+                    from networkDevice in dbContext.NetworkDevices
+                    join matchingTemplate in dbContext.TemplateConfigurations
+                    on networkDevice.Id equals matchingTemplate.NetworkDevice.Id
+                    into joinTable
+                    from template in joinTable.DefaultIfEmpty()
+                    select new NetworkDeviceReportViewModel
+                    {
+                        Id = networkDevice.Id,
+                        DeviceType = networkDevice.DeviceType,
+                        Hostname  = networkDevice.Hostname,
+                        DomainName  = networkDevice.DomainName,
+                        Description = networkDevice.Description,
+                        IPAddress = networkDevice.IPAddress,
+                        Network = networkDevice.Network,
+                        Uplinks = networkDevice.Uplinks,
+                        DHCPRelay = networkDevice.DHCPRelay,
+                        DHCPExclusions = networkDevice.DHCPExclusions,
+                        DHCPTftpBootfile = networkDevice.DHCPTftpBootfile,
+                        Template = (template == null) ? null :
+                            new NetworkDeviceTemplateViewModel
+                            {
+                                Id = template.Template.Id,
+                                Name = template.Template.Name,
+                                Description = template.Description,
+                                Parameters = template.Properties
+                            }
+                    }
+                )
+                .ToListAsync();
+
+            return new ObjectResult(result);
+        }
+
         [HttpGet("{id}/template")]
         public async Task<IActionResult> GetTemplateConfiguration(
                 [FromServices] PnPServerContext dbContext,
@@ -184,6 +315,64 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
             }
 
             return new ObjectResult(templateConfigurations);
+        }
+
+        public class NetworkUplinkViewModel
+        {
+            [JsonProperty("id")]
+            public Guid Id { get; set; }
+            [JsonProperty("domainName")]
+            public string DomainName { get; set; }
+            [JsonProperty("networkDeviceId")]
+            public Guid NetworkDeviceId { get; set; }
+            [JsonProperty("networkDevice")]
+            public string NetworkDevice { get; set; }
+            [JsonProperty("interfaceIndex")]
+            public int InterfaceIndex { get; set; }
+            [JsonProperty("interface")]
+            public string Interface { get; set; }
+            [JsonProperty("uplinkToDeviceId")]
+            public Guid UplinkToDeviceId { get; set; }
+            [JsonProperty("uplinkToDevice")]
+            public string UplinkToDevice { get; set; }
+            [JsonProperty("uplinkToInterfaceIndex")]
+            public int UplinkToInterfaceIndex { get; set; }
+            [JsonProperty("uplinkToInterface")]
+            public string UplinkToInterface { get; set; }
+        }
+
+        // GET api/values/5
+        [HttpGet("uplinks")]
+        public async Task<IActionResult> GetUplinks(
+                [FromServices] PnPServerContext dbContext
+            )
+        {
+            var uplinks = await dbContext.NetworkDeviceLinks
+                //.Include("NetworkDevice")
+                //.Include("ConnectedToDevice")
+                .Select(x =>
+                    new NetworkUplinkViewModel
+                    {
+                        Id = x.Id,
+                        DomainName = x.NetworkDevice.DomainName,
+                        NetworkDeviceId = x.NetworkDevice.Id,
+                        NetworkDevice = x.NetworkDevice.Hostname,
+                        InterfaceIndex = x.InterfaceIndex,
+                        Interface = x.NetworkDevice.DeviceType.Interfaces.Where(y => y.InterfaceIndex == x.InterfaceIndex).First().Name,
+                        UplinkToDeviceId = x.ConnectedToDevice.Id,
+                        UplinkToDevice = x.ConnectedToDevice.Hostname,
+                        UplinkToInterfaceIndex = x.ConnectedToInterfaceIndex,
+                        UplinkToInterface = x.ConnectedToDevice.DeviceType.Interfaces.Where(y => y.InterfaceIndex == x.ConnectedToInterfaceIndex).First().Name
+                    }
+                )
+                .ToListAsync();
+
+            if (uplinks == null)
+            {
+                return NotFound();
+            }
+
+            return new ObjectResult(uplinks);
         }
     }
 }

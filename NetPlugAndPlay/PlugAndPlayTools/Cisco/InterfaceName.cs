@@ -20,7 +20,7 @@ namespace NetPlugAndPlay.PlugAndPlayTools.Cisco
         public bool HasSubinterface { get; set; }
         public int Subinterface { get; set; }
 
-        private static Regex interfaceNameExpression = new Regex(@"((?<name>[A-Za-z]+[A-Za-z0-9]*[A-Za-z])(((?<indices>[0-9])+/?)+)(?<subinterface>\.[0-9]+)?)");
+        private static Regex interfaceNameExpression = new Regex(@"((?<name>[A-Za-z]+[A-Za-z0-9]*[A-Za-z])(((?<indices>[0-9])+/?)+)(\.(?<subinterface>[0-9]+))?)");
 
         public InterfaceName subsequent(int offset)
         {

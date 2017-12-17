@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace NetPlugAndPlay.Services.DHCP_Server
+namespace NetPlugAndPlay.Services.DHCPServer
 {
     public class DHCPClient
     {

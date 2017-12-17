@@ -42,7 +42,7 @@ namespace NetPlugAndPlay.Services.SyslogServer
 
         public SyslogServer()
         {
-            Log.Information("Starting Syslog Server");
+            Log.Logger.Here().Information("Starting Syslog Server");
             if (Instance != null)
                 throw new Exception("There can only be one syslog server instance running at a time");
 
@@ -71,7 +71,7 @@ namespace NetPlugAndPlay.Services.SyslogServer
             }
             catch (Exception e)
             {
-                Log.Error(e, "Syslog packet failure");
+                Log.Logger.Here().Error(e, "Syslog packet failure");
                 return false;
             }
         }
@@ -79,7 +79,7 @@ namespace NetPlugAndPlay.Services.SyslogServer
         public async Task<bool> ProcessReceivedPacket(byte[] buffer, IPEndPoint remoteEndPoint)
         {
             var message = Encoding.ASCII.GetString(buffer, 0, buffer.Length);
-            Log.Information("Syslog message received from " + remoteEndPoint.ToString() + " - " + message);
+            Log.Logger.Here().Information("Syslog message received from " + remoteEndPoint.ToString() + " - " + message);
 
             if (OnSyslogMessage == null)
                 return false;

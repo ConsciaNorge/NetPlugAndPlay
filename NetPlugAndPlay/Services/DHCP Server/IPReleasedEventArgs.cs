@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 
-namespace NetPlugAndPlay.Services.DHCP_Server
+namespace NetPlugAndPlay.Services.DHCPServer
 {
     public class IPReleasedEventArgs : EventArgs
     {

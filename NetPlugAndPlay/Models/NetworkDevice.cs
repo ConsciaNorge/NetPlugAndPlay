@@ -23,10 +23,12 @@ namespace NetPlugAndPlay.Models
         [JsonProperty("network")]
         public string Network { get; set; }
         [JsonProperty("uplinks")]
-        public List<NetworkDeviceLink> Uplinks { get; set; }
+        public virtual List<NetworkDeviceLink> Uplinks { get; set; }
         [JsonProperty("dhcpRelay")]
         public bool DHCPRelay { get; set; }
         [JsonProperty("dhcpExclusions")]
         public virtual List<DHCPExclusion> DHCPExclusions { get; set; }
+        [JsonProperty("dhcpTftpBootfile")]
+        public string DHCPTftpBootfile { get; set; }
     }
 }

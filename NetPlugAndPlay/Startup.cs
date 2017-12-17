@@ -17,7 +17,7 @@ namespace NetPlugAndPlay
     public class Startup
     {
         static Services.TFTP_Server.Server tftpServer;
-        static Services.DHCP_Server.Server dhcpServer;
+        static Services.DHCPServer.Server dhcpServer;
         static Services.SyslogServer.SyslogServer syslogServer;
         static Services.DeviceConfigurator.DeviceConfigurator deviceConfigurator;
 
@@ -31,7 +31,11 @@ namespace NetPlugAndPlay
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
+            services
+                .AddMvc()
+                .AddJsonOptions(options => 
+                    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+                );
 
             services.AddDbContext<PnPServerContext>(options =>
                             options.UseSqlServer(Configuration.GetValue<string>("Data:DefaultConnection:ConnectionString")));
@@ -64,14 +68,14 @@ namespace NetPlugAndPlay
                 .ReadFrom.Configuration(Configuration)
                 .CreateLogger();
 
-                        tftpServer = new Services.TFTP_Server.Server();
-                        dhcpServer = new Services.DHCP_Server.Server();
-                        syslogServer = new Services.SyslogServer.SyslogServer();
-                        deviceConfigurator = new Services.DeviceConfigurator.DeviceConfigurator();
+            tftpServer = new Services.TFTP_Server.Server();
+            dhcpServer = new Services.DHCPServer.Server();
+            syslogServer = new Services.SyslogServer.SyslogServer();
+            deviceConfigurator = new Services.DeviceConfigurator.DeviceConfigurator();
 
-                        syslogServer.OnSyslogMessage += deviceConfigurator.SyslogMessageHandler;
-                        dhcpServer.OnIPReleased += deviceConfigurator.ForgetIP;
-
+            syslogServer.OnSyslogMessage += deviceConfigurator.SyslogMessageHandler;
+            dhcpServer.OnIPReleased += deviceConfigurator.ForgetIP;
+            deviceConfigurator.OnRegisterNewDHCPPool += dhcpServer.RegisterNewPool;
 
             app.UseStaticFiles();
 

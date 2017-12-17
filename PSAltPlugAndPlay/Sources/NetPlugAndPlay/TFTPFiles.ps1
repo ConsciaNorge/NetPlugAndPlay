@@ -99,7 +99,7 @@ Function Set-TFTPFile {
     #     throw [System.ArgumentException]::new('Cannot resolve network device type ''' + $DeviceType + '''')
     # }
 
-    $existingEntry = Get-TFTPFiles -PnPHost $PnPHost -HostPort $HostPort -FilePath $FilePath
+    $existingEntry = Get-TFTPFiles -PnPHost $PnPHost -HostPort $HostPort -FilePath $FilePath -ErrorAction SilentlyContinue
     if($null -eq $existingEntry)
     {
         $requestBody = @{

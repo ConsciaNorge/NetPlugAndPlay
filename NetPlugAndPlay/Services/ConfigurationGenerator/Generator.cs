@@ -1,15 +1,13 @@
-﻿using NetPlugAndPlay.Models;
+﻿using IPAddressExtensions;
 using Microsoft.EntityFrameworkCore;
+using NetPlugAndPlay.Models;
 using NVelocity;
 using NVelocity.App;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Net;
-using IPAddressExtensions;
+using System.Threading.Tasks;
 
 namespace NetPlugAndPlay.Services.ConfigurationGenerator
 {
@@ -35,11 +33,36 @@ namespace NetPlugAndPlay.Services.ConfigurationGenerator
 
             string template = templateConfig.Template.Content;
 
+            var dhcpRelayDevices = await dbContext.NetworkDevices
+                .Where(x =>
+                    x.DHCPRelay
+                )
+                .ToListAsync();
+
+            var address = IPAddress.Parse(ipAddress);
+            var relayDevice = dhcpRelayDevices
+                .Where(x =>
+                    LibDHCPServer.VolatilePool.NetworkPrefix.Parse(x.Network).Contains(address)
+                )
+                .FirstOrDefault();
+
             var context = new VelocityContext();
             foreach (var prop in templateConfig.Properties)
                 context.Put(prop.Name, prop.Value);
 
             context.Put("ipAddress", ipAddress);
+            context.Put("hostname", string.Join("", address.GetAddressBytes().Select(x => x.ToString("X2")).ToList()));
+            if (relayDevice != null)
+                context.Put("domainName", relayDevice.DomainName);
+            context.Put("tftpServer", address.SourceIP());
+            context.Put("dhcpServer", address.SourceIP());
+            context.Put("syslogServer", address.SourceIP());
+
+            context.Put("telnetUsername", DeviceConfigurator.DeviceConfigurator.TelnetUsername);
+            context.Put("telnetPassword", DeviceConfigurator.DeviceConfigurator.TelnetPassword);
+            context.Put("enablePassword", DeviceConfigurator.DeviceConfigurator.TelnetEnablePassword);
+
+            context.Put("deviceReadyMessage", DeviceConfigurator.DeviceConfigurator.DeviceConfiguredLogMessage);
 
             context.Put("esc", new NVelocityRuntime.CiscoEsc());
 
@@ -77,7 +100,16 @@ namespace NetPlugAndPlay.Services.ConfigurationGenerator
             foreach (var prop in templateConfig.Properties)
                 context.Put(prop.Name, prop.Value);
 
+            context.Put("telnetUsername", DeviceConfigurator.DeviceConfigurator.TelnetUsername);
+            context.Put("telnetPassword", DeviceConfigurator.DeviceConfigurator.TelnetPassword);
             context.Put("ipAddress", templateConfig.NetworkDevice.IPAddress.ToString());
+
+            var thisServerIP = Common.NetworkTools.LocalRoutingTable.QueryRoutingInterface(IPAddress.Parse(templateConfig.NetworkDevice.IPAddress));
+
+            context.Put("tftpServer", thisServerIP.ToString());
+            context.Put("automationServer", thisServerIP.ToString());
+            context.Put("dhcpServer", thisServerIP.ToString());
+            context.Put("syslogServer", thisServerIP.ToString());
 
             context.Put("esc", new NVelocityRuntime.CiscoEsc());
 
@@ -129,6 +161,13 @@ namespace NetPlugAndPlay.Services.ConfigurationGenerator
             if (relayDevice != null)
                 context.Put("domainName", relayDevice.DomainName);
             context.Put("tftpServer", address.SourceIP());
+            context.Put("dhcpServer", address.SourceIP());
+            context.Put("syslogServer", address.SourceIP());
+
+            context.Put("telnetUsername", DeviceConfigurator.DeviceConfigurator.TelnetUsername);
+            context.Put("telnetPassword", DeviceConfigurator.DeviceConfigurator.TelnetPassword);
+            context.Put("enablePassword", DeviceConfigurator.DeviceConfigurator.TelnetEnablePassword);
+
             context.Put("deviceReadyMessage", DeviceConfigurator.DeviceConfigurator.DeviceConfiguredLogMessage);
 
             context.Put("esc", new NVelocityRuntime.CiscoEsc());

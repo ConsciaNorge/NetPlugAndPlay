@@ -84,6 +84,7 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
                 return NotFound();
             }
 
+            // TODO : Template properties!!!
             // TODO : Consider supporting more than just description on put (properties)
             item.Description = templateConfiguration.Description;
 

@@ -23,10 +23,15 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
             StringValues names;
             if(Request.Query.TryGetValue("name", out names))
             {
-                return await dbContext.Templates.Where(x => names.Contains(x.Name)).ToListAsync();
+                return await dbContext.Templates
+                    .Where(x => 
+                        names.Contains(x.Name)
+                    )
+                    .ToListAsync();
             }
 
-            return await dbContext.Templates.ToListAsync();
+            return await dbContext.Templates
+                .ToListAsync();
         }
 
         // GET api/values/5

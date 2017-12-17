@@ -105,6 +105,7 @@ Function Invoke-ProcessPnPDevice {
                 Network         = $network
                 DhcpRelay       = $dhcpRelay
                 DhcpExclusions  = $DeviceConfig.dhcpExclusions
+                DhcpTftpBootfile = $DeviceConfig.dhcpTftpBootfile
             }
 
             $networkDevice = Add-PnPNetworkDevice @hostParams @addSplat
@@ -188,6 +189,7 @@ Function Invoke-ProcessPnPDevice {
                 Network         = $network
                 DhcpRelay       = $dhcpRelay
                 DhcpExclusions  = $DeviceConfig.dhcpExclusions
+                DhcpTftpBootfile = $DeviceConfig.dhcpTftpBootfile
             }
 
             $networkDevice = Set-PnPNetworkDevice @hostParams @updateSplat

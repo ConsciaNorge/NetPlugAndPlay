@@ -33,7 +33,19 @@ namespace NetPlugAndPlay.Controllers.v0.TFTP
 
             if (string.IsNullOrEmpty(filePath))
             {
-                var result = await dbContext.TFTPFiles.Select(x => new TFTPFileListResult { Id = x.Id, FilePath = x.FilePath, FileSize = x.Content.Length }).ToListAsync();
+                var result = await (
+                    from tftpFile in dbContext.TFTPFiles
+                    select new TFTPFileListResult
+                    {
+                        Id = tftpFile.Id,
+                        FilePath = tftpFile.FilePath,
+                        FileSize = tftpFile.Content.Length
+                    }
+                )
+                .ToListAsync();
+
+                if (result == null)
+                    return NotFound();
 
                 return new ObjectResult(result);
             }
@@ -50,6 +62,24 @@ namespace NetPlugAndPlay.Controllers.v0.TFTP
 
                 return new ObjectResult(result);
             }
+        }
+
+        // GET: api/values
+        [HttpGet("report")]
+        public async Task<IActionResult> GetReport(
+                [FromServices] PnPServerContext dbContext
+            )
+        {
+            var result = await (
+                from tftpFile in dbContext.TFTPFiles
+                select tftpFile
+            )
+            .ToListAsync();
+
+            if (result == null)
+                return NotFound();
+
+            return new ObjectResult(result);
         }
 
         // GET: api/values

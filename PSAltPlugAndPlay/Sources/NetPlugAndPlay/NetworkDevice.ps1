@@ -97,7 +97,10 @@ Function Add-PnPNetworkDevice {
         [switch]$DhcpRelay=$false,
 
         [Parameter()]
-        [PSCustomObject[]]$DhcpExclusions
+        [PSCustomObject[]]$DhcpExclusions,
+
+        [Parameter()]
+        [string]$DhcpTftpBootfile = ''
     )
 
     $networkDeviceType = Get-PnPNetworkDeviceType -PnPHost $PnPHost -HostPort $HostPort | Where-Object { $_.Name -ilike $DeviceType }
@@ -124,6 +127,7 @@ Function Add-PnPNetworkDevice {
                 end = $_.End
             } 
         })
+        dhcpTftpBootfile = $DhcpTftpBootfile
     }
 
     $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevice')
@@ -174,7 +178,10 @@ Function Set-PnPNetworkDevice {
         [switch]$DhcpRelay=$false,
 
         [Parameter()]
-        [PSCustomObject[]]$DhcpExclusions
+        [PSCustomObject[]]$DhcpExclusions,
+
+        [Parameter()]
+        [string]$DhcpTftpBootfile = ''
     )
 
     if($Id -eq [Guid]::Empty) {
@@ -215,6 +222,7 @@ Function Set-PnPNetworkDevice {
                 end = $_.End
             } 
         })
+        dhcpTftpBootfile = $DhcpTftpBootfile
     }
 
     $uri = ('http://' + $PnPHost + ':' + $HostPort.ToString() + $sitePrefix + '/api/v0/plugandplay/networkdevice/' + $id)

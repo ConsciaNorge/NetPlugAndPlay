@@ -57,7 +57,7 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                 var now = DateTimeOffset.Now;
                 Devices.RemoveAll(x => x.TimeExpires <= now);
 
-                Log.Debug("Finding registered device " + deviceAddress.ToString());
+                Log.Logger.Here().Debug("Finding registered device " + deviceAddress.ToString());
                 var match = Devices
                     .Where(x =>
                         x.HostAddress.Equals(deviceAddress)
@@ -66,10 +66,10 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
 
                 if (match == null)
                 {
-                    Log.Debug("Didn't find registered device " + deviceAddress.ToString());
+                    Log.Logger.Here().Debug("Didn't find registered device " + deviceAddress.ToString());
                     return Guid.Empty;
                 }
-                Log.Debug("Found registered device " + deviceAddress.ToString() + " as " + match.NetworkDeviceId.ToString());
+                Log.Logger.Here().Debug("Found registered device " + deviceAddress.ToString() + " as " + match.NetworkDeviceId.ToString());
 
                 match.TimeExpires = now.Add(TimeSpan.FromSeconds(300));
 

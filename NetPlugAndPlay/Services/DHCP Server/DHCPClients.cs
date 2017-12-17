@@ -6,7 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace NetPlugAndPlay.Services.DHCP_Server
+namespace NetPlugAndPlay.Services.DHCPServer
 {
     public class DHCPClients
     {
@@ -23,11 +23,11 @@ namespace NetPlugAndPlay.Services.DHCP_Server
 
                 if (count == 0)
                 {
-                    Log.Debug("Received DHCP release for client ID " + packet.ClientId.ToString() + " but could not find a corresponding lease");
+                    Log.Logger.Here().Debug("Received DHCP release for client ID " + packet.ClientId.ToString() + " but could not find a corresponding lease");
                     return false;
                 }
 
-                Log.Information("Received DHCP release for client ID " + packet.ClientId.ToString() + " and processed successfully");
+                Log.Logger.Here().Information("Received DHCP release for client ID " + packet.ClientId.ToString() + " and processed successfully");
                 return true;
             }
         }

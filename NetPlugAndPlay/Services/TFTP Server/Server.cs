@@ -11,6 +11,7 @@ using Tftp.Net;
 using System.Text.RegularExpressions;
 using NetPlugAndPlay.Services.DeviceConfigurator;
 using Serilog;
+using LibDHCPServer.VolatilePool;
 
 namespace NetPlugAndPlay.Services.TFTP_Server
 {
@@ -21,7 +22,7 @@ namespace NetPlugAndPlay.Services.TFTP_Server
 
         public Server()
         {
-            Log.Information("Starting TFTP Server");
+            Log.Logger.Here().Information("Starting TFTP Server");
             if(s_instance != null)
             {
                 throw new Exception("Only a single instance of TFTP Server can be instantiated at a time");
@@ -41,7 +42,7 @@ namespace NetPlugAndPlay.Services.TFTP_Server
             EndPoint client
             )
         {
-            Log.Information("Incoming TFTP request from " + client.ToString() + " for file " + transfer.Filename);
+            Log.Logger.Here().Information("Incoming TFTP request from " + client.ToString() + " for file " + transfer.Filename);
             string connectionString = string.Empty;
 
             string ipAddress = "";
@@ -60,7 +61,7 @@ namespace NetPlugAndPlay.Services.TFTP_Server
                 }
                 catch (Exception e)
                 {
-                    Log.Error(e, "Attempted to read configuration from startup before startup is completed due to premature handling of TFTP request.");
+                    Log.Logger.Here().Error(e, "Attempted to read configuration from startup before startup is completed due to premature handling of TFTP request.");
                     transfer.Cancel(TftpErrorPacket.FileNotFound);
                     return;
                 }
@@ -77,25 +78,74 @@ namespace NetPlugAndPlay.Services.TFTP_Server
                 else
                     networkDevice = dbContext.NetworkDevices.Where(x => x.Id == networkDeviceId).FirstOrDefault();
 
+                // If the device is unknown by cache or IP address, then try matching it to a /30 subnet of the upstream device
                 if (networkDevice == null)
                 {
-                    Log.Warning("Request for " + transfer.Filename + " from " + ipAddress.ToString() + " unhandled as the network device is not known");
+                    string slash24 = ipAddress.Substring(0, ipAddress.LastIndexOf('.'));
+                    Log.Logger.Here().Debug("Device not found by cache or exact IP match. Attempting to match to a /30 upstream device with the first /24 bits as " + slash24);
+
+                    var possibleDevices = dbContext.NetworkDevices
+                        .Where(x =>
+                            x.Network.EndsWith("/30") &&
+                            x.Network.StartsWith(slash24)
+                        )
+                        .ToList();
+
+                    if (possibleDevices != null)
+                    {
+                        Log.Logger.Here().Debug("There are " + possibleDevices.Count.ToString() + " /30 uplink devices found with prefixes matching the first 24 bits " + slash24);
+                        var upstreamDevice = possibleDevices
+                            .Where(x =>
+                                NetworkPrefix.Parse(x.Network).Contains(IPAddress.Parse(ipAddress))
+                            )
+                            .FirstOrDefault();
+
+                        if (upstreamDevice != null)
+                        {
+                            Log.Logger.Here().Debug("Found exact match for " + ipAddress + " as being the only device connected to a /30 network on " + upstreamDevice.Hostname + "." + upstreamDevice.DomainName);
+
+                            var connectedLink = dbContext.NetworkDeviceLinks
+                                .Where(x =>
+                                    x.ConnectedToDevice.Id == upstreamDevice.Id
+                                )
+                                .Include("NetworkDevice")
+                                .FirstOrDefault();
+
+                            // TODO : Refactor configuration system for networks on links. This is too single-dimensional
+                            if (connectedLink != null)
+                            {
+                                networkDevice = connectedLink.NetworkDevice;
+                                Log.Logger.Here().Debug("Found a device connected to the upstream /30 device " + upstreamDevice.IPAddress + " assuming this device is the correct one " + networkDevice.Hostname + "." + networkDevice.DomainName);
+                            }
+                            else
+                                Log.Logger.Here().Debug("No devices seem to be configured as connected to " + upstreamDevice.Network);
+                        }
+                        else
+                            Log.Logger.Here().Debug("Could not find any /30 upstream network devices for " + ipAddress);
+                    }
+                    else
+                        Log.Logger.Here().Debug("Could not find any /30 upstream network devices for " + ipAddress);
+                }
+
+                if (networkDevice == null)
+                {
+                    Log.Logger.Here().Warning("Request for " + transfer.Filename + " from " + ipAddress.ToString() + " unhandled as the network device is not known");
                 }
                 else
                 {
-                    Log.Debug("Generating configuration for " + ipAddress.ToString() + " which is identified as " + networkDevice.Hostname + "." + networkDevice.DomainName);
+                    Log.Logger.Here().Debug("Generating configuration for " + ipAddress.ToString() + " which is identified as " + networkDevice.Hostname + "." + networkDevice.DomainName);
                     var configText = Task.Run<string>(() => { return ConfigurationGenerator.Generator.Generate(networkDevice.Id, dbContext); }).Result;
 
                     if (string.IsNullOrEmpty(configText))
                     {
-                        Log.Warning("Failed to generate configuration for " + ipAddress.ToString() + " which is identified as " + networkDevice.Hostname + "." + networkDevice.DomainName);
+                        Log.Logger.Here().Warning("Failed to generate configuration for " + ipAddress.ToString() + " which is identified as " + networkDevice.Hostname + "." + networkDevice.DomainName);
                         transfer.Cancel(TftpErrorPacket.FileNotFound);
                         return;
                     }
                     else
                     {
                         var data = new MemoryStream(Encoding.ASCII.GetBytes(configText));
-                        Log.Debug("Transmitting via TFTP " + data.Length.ToString() + " bytes of configuration for request from " + ipAddress.ToString() + " for " + transfer.Filename);
+                        Log.Logger.Here().Debug("Transmitting via TFTP " + data.Length.ToString() + " bytes of configuration for request from " + ipAddress.ToString() + " for " + transfer.Filename);
 
                         transfer.Start(data);
                         return;
@@ -111,7 +161,7 @@ namespace NetPlugAndPlay.Services.TFTP_Server
                 }
                 catch (Exception e)
                 {
-                    Log.Error(e, "Attempted to read configuration from startup before startup is completed due to premature handling of TFTP request.");
+                    Log.Logger.Here().Error(e, "Attempted to read configuration from startup before startup is completed due to premature handling of TFTP request.");
                     transfer.Cancel(TftpErrorPacket.FileNotFound);
                     return;
                 }
@@ -121,18 +171,18 @@ namespace NetPlugAndPlay.Services.TFTP_Server
 
                 var dbContext = new PnPServerContext(dbOptions.Options);
 
-                Log.Debug("Generating configuration for " + transfer.Filename + " requested by " + ipAddress.ToString());
+                Log.Logger.Here().Debug("Generating configuration for " + transfer.Filename + " requested by " + ipAddress.ToString());
                 var config = Task.Run<string>(() => { return ConfigurationGenerator.Generator.Generate(ipAddress, transfer.Filename, dbContext); }).Result;
                 if (string.IsNullOrEmpty(config))
                 {
-                    Log.Warning("Failed to generate configuration for " + transfer.Filename + " requested by " + ipAddress.ToString() + " because it either didn't exist or was not a valid format");
+                    Log.Logger.Here().Warning("Failed to generate configuration for " + transfer.Filename + " requested by " + ipAddress.ToString() + " because it either didn't exist or was not a valid format");
                     transfer.Cancel(TftpErrorPacket.FileNotFound);
                     return;
                 }
                 else
                 {
                     var data = new MemoryStream(Encoding.ASCII.GetBytes(config));
-                    Log.Debug("Transmitting via TFTP " + data.Length.ToString() + " bytes of configuration for request from " + ipAddress.ToString() + " for " + transfer.Filename);
+                    Log.Logger.Here().Debug("Transmitting via TFTP " + data.Length.ToString() + " bytes of configuration for request from " + ipAddress.ToString() + " for " + transfer.Filename);
 
                     transfer.Start(data);
                 }

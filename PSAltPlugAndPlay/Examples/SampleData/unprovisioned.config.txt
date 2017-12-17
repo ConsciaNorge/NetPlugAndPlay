@@ -17,7 +17,7 @@ vtp mode transparent
 int vlan 1
  ip address dhcp
 !
-username initialConfig privilege 15 secret Minions12345
+username $telnetUsername privilege 15 secret $telnetPassword
 !
 ip access-list standard ACL_CDP_SNOOPER
  permit $tftpServer 0.0.0.0

@@ -36,16 +36,31 @@ namespace NetPlugAndPlay.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TFTPFiles",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(nullable: false),
+                    Content = table.Column<string>(nullable: true),
+                    FilePath = table.Column<string>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TFTPFiles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "NetworkDevices",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(nullable: false),
                     DHCPRelay = table.Column<bool>(nullable: false),
+                    DHCPTftpBootfile = table.Column<string>(nullable: true),
                     Description = table.Column<string>(nullable: true),
                     DeviceTypeId = table.Column<Guid>(nullable: true),
                     DomainName = table.Column<string>(nullable: true),
                     Hostname = table.Column<string>(nullable: true),
-                    IPAddress = table.Column<string>(nullable: true)
+                    IPAddress = table.Column<string>(nullable: true),
+                    Network = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -225,6 +240,9 @@ namespace NetPlugAndPlay.Migrations
 
             migrationBuilder.DropTable(
                 name: "TemplateProperties");
+
+            migrationBuilder.DropTable(
+                name: "TFTPFiles");
 
             migrationBuilder.DropTable(
                 name: "TemplateConfigurations");

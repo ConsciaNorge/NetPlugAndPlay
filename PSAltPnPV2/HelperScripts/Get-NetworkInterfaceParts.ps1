@@ -1,0 +1,55 @@
+<#
+This code is written and maintained by Darren R. Starr from Conscia Norway AS.
+License :
+Copyright (c) 2017 Conscia Norway AS
+Permission is hereby granted, free of charge, to any person obtaining a 
+copy of this software and associated documentation files (the "Software"), 
+to deal in the Software without restriction, including without limitation 
+the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+and/or sell copies of the Software, and to permit persons to whom the Software 
+is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in 
+all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#>
+
+<#
+    .SYNOPSIS
+        Parses the parts of a Cisco interface name and returns the parts
+    .PARAMETER Name
+        The string to parse
+#>
+Function Get-NetworkInterfaceParts
+{
+    Param(
+        [Parameter(Mandatory)]
+        [string]$Name
+    )
+
+    $interfaceNameExpression = [Regex]::new('((?<name>[A-Za-z]+[A-Za-z0-9]*[A-Za-z])(((?<indices>[0-9])+/?)+)(\.(?<subinterface>[0-9]+))?)', [System.Text.RegularExpressions.RegexOptions]::Compiled)
+
+    $m = $interfaceNameExpression.Match($Name);
+    if(
+        ($null -eq $m) -or
+        (-not $m.Success)
+    ) {
+        return $null
+    }
+
+    $subinterface = 0
+    if($m.Groups['subinterface'].Success) { 
+        $subinterface = [Convert]::ToInt32($m.Groups['subinterface'].Value) 
+    }
+
+    return @{
+        name = $m.Groups['name'].Value
+        indices = $m.Groups['indices'].Captures.ForEach({ [Convert]::ToInt32($_.Value) })
+        hasSubinterface = $m.Groups['subinterface'].Success
+        subinterface = $subinterface
+    }
+}

@@ -1,0 +1,43 @@
+service timestamps log datetime msec show-timezone
+service password-encryption
+!
+file prompt quiet
+!
+hostname $hostname
+ip domain-name $domainName
+!
+aaa new-model
+aaa authentication login default local
+aaa authentication enable default enable
+aaa authorization console
+aaa authorization exec default local
+!
+enable secret $enableSecret
+!
+interface FastEthernet0/0
+ ip address $ipAddress $subnetMask
+ ip helper-address 10.100.11.55
+ no shut
+!
+interface FastEthernet0/1
+ ip address $uplinkAddress $uplinkSubnetMask
+ no shut
+!
+ip route 0.0.0.0 0.0.0.0 $defaultGateway
+!
+username admin priv 15 secret Minions12345
+!
+ip access-list standard ACL_CDP_SNOOPER
+ permit host 10.100.11.55
+!
+line vty 0 4
+ login authentication default
+ transport input telnet
+ access-class ACL_CDP_SNOOPER in
+!
+logging host 10.100.11.55
+logging trap 7
+!
+ntp server 10.100.1.1
+!
+end

@@ -11,7 +11,7 @@ using System;
 namespace NetPlugAndPlay.Migrations
 {
     [DbContext(typeof(PnPServerContext))]
-    [Migration("20171124160136_Initial")]
+    [Migration("20171211075714_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -46,6 +46,8 @@ namespace NetPlugAndPlay.Migrations
 
                     b.Property<bool>("DHCPRelay");
 
+                    b.Property<string>("DHCPTftpBootfile");
+
                     b.Property<string>("Description");
 
                     b.Property<Guid?>("DeviceTypeId");
@@ -55,6 +57,8 @@ namespace NetPlugAndPlay.Migrations
                     b.Property<string>("Hostname");
 
                     b.Property<string>("IPAddress");
+
+                    b.Property<string>("Network");
 
                     b.HasKey("Id");
 
@@ -169,6 +173,20 @@ namespace NetPlugAndPlay.Migrations
                     b.HasIndex("TemplateConfigurationId");
 
                     b.ToTable("TemplateProperties");
+                });
+
+            modelBuilder.Entity("NetPlugAndPlay.Models.TFTPFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Content");
+
+                    b.Property<string>("FilePath");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TFTPFiles");
                 });
 
             modelBuilder.Entity("NetPlugAndPlay.Models.DHCPExclusion", b =>
