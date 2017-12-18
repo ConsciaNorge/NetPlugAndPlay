@@ -56,7 +56,6 @@
                     @{ name='deviceDescription';  value='My name is Jonas' }
                     @{ name='deviceRole';         value='Access' }
                     @{ name='circuitIdd';          value='l1234011a.nm.local' }
-                    @{ name='pookie';          value='l1234011a.nm.local' }
                     )
             }
         },
@@ -90,7 +89,7 @@
         @{
             domainName         = 'nm.local'
             networkDevice      = 'l1234011b'
-            interface          = 'GigabitEthernet0/2'
+            interface          = 'FastEthernet0/2'
             uplinkToDevice     = 'l1234011a'
             uplinkToInterface  = 'GigabitEthernet0/1'
         },

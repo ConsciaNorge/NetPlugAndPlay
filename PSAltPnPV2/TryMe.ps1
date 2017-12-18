@@ -39,7 +39,7 @@ Function Get-ListNetworkDeviceTypeInterfaceChanges
             existingInterfaces = $ExistingDeviceType.interfaces
             interfaces = $null
             toAdd = $null
-            toRemove = $ExistingDeviceType.interfaces
+            toRemove = [PSCustomObject[]]$ExistingDeviceType.interfaces
             toChange = $null
         }
     }
@@ -59,14 +59,14 @@ Function Get-ListNetworkDeviceTypeInterfaceChanges
         return @{
             existingInterfaces = $null
             interfaces = $interfaceList
-            toAdd = $interfaceList
+            toAdd = [PSCustomObject[]]$interfaceList
             toRemove = $null
             toChange = $null
         }
     }
 
     # Identify the items which need to be added to the system
-    $interfacesToAdd = $interfaceList | Where-Object {
+    [PSCustomObject[]]$interfacesToAdd = $interfaceList | Where-Object {
         $interface = $_
         $null -eq ($existingInterfaceList | Where-Object {
             $_.name -ilike $interface.name
@@ -74,7 +74,7 @@ Function Get-ListNetworkDeviceTypeInterfaceChanges
     }
 
     # Identify the items which need to be removed from the system
-    $interfacesToRemove = $existingInterfaceList | Where-Object {
+    [PSCustomObject[]]$interfacesToRemove = $existingInterfaceList | Where-Object {
         $interface = $_
         $null -eq ($interfaceList | Where-Object {
             $_.name -ilike $interface.name
@@ -82,7 +82,7 @@ Function Get-ListNetworkDeviceTypeInterfaceChanges
     }
 
     # Identify network device types to change
-    $interfacesToChange = $existingInterfaceList | Where-Object {
+    [PSCustomObject[]]$interfacesToChange = $existingInterfaceList | Where-Object {
         $interface = $_
         $null -ne ($interfaceList | Where-Object {
             ($_.name -ilike $interface.name) -and
@@ -1352,19 +1352,20 @@ function Get-RestDeviceTypeChanges
     if($null -ne $changes.deviceTypeChanges.toAdd) {
         Write-Debug 'Added'
         
-        $changes.deviceTypeChanges.toAdd | ForEach-Object ({
+        [PSCustomObject[]]$toAdd = $changes.deviceTypeChanges.toAdd | ForEach-Object ({
             Write-Debug (' '  + $_.name)
+            $_
         })
         Write-Debug ''
 
-        Add-Member -InputObject $result -MemberType NoteProperty -Name 'toAdd' -Value $changes.deviceTypeChanges.toAdd
+        Add-Member -InputObject $result -MemberType NoteProperty -Name 'toAdd' -Value $toAdd
     }
 
     if($null -ne $changes.deviceTypeChanges.toRemove) {
         Write-Debug 'Removals'
         Write-Debug '---------------------------------'
         
-        $toRemove = $changes.deviceTypeChanges.toRemove | ForEach-Object ({
+        [Guid[]]$toRemove = $changes.deviceTypeChanges.toRemove | ForEach-Object ({
             Write-Debug (' '  + $_.name)
             $_.id
         })
@@ -1377,7 +1378,7 @@ function Get-RestDeviceTypeChanges
         Write-Debug 'Changed'
         Write-Debug '---------------------------------'
         
-        $toChange = $changes.deviceTypeChanges.toChange | ForEach-Object ({
+        [PSCustomObject[]]$toChange = $changes.deviceTypeChanges.toChange | ForEach-Object ({
             Write-Debug (' '  + $_.deviceType.name)
 
             $deviceType = $_.deviceType
@@ -1403,16 +1404,18 @@ function Get-RestDeviceTypeChanges
 
                 if($null -ne $_.interfaceChanges.toAdd) {
                     Write-Debug ('   Added')
-                    $_.interfaceChanges.toAdd | ForEach-Object ({
+                    
+                    [PSCustomObject[]]$interfacesToAdd = $_.interfaceChanges.toAdd | ForEach-Object ({
                         Write-Debug ('    ' + $_.name)
+                        $_
                     })
 
-                    Add-Member -InputObject $interfacesResult -MemberType NoteProperty -Name 'toAdd' -Value $_.interfaceChanges.toAdd
+                    Add-Member -InputObject $interfacesResult -MemberType NoteProperty -Name 'toAdd' -Value $interfacesToAdd
                 }
 
                 if($null -ne $_.interfaceChanges.toRemove) {
                     Write-Debug ('   Removed')
-                    $interfacesToRemove = $_.interfaceChanges.toRemove | ForEach-Object ({
+                    [Guid[]]$interfacesToRemove = $_.interfaceChanges.toRemove | ForEach-Object ({
                         Write-Debug ('    ' + $_.name)
                         $_.id
                     })
@@ -1426,7 +1429,7 @@ function Get-RestDeviceTypeChanges
                     $interfaces = $_.interfaceChanges.interfaces
                     $existingInterfaces = $_.interfaceChanges.existingInterfaces
 
-                    $interfacesToChange = $_.interfaceChanges.toChange | ForEach-Object ({
+                    [PSCustomObject[]]$interfacesToChange = $_.interfaceChanges.toChange | ForEach-Object ({
                         $toChange = $_
 
                         $interface = $interfaces | Where-Object { $_.name -eq $toChange.name }
@@ -1478,19 +1481,20 @@ function Get-RestTemplateChanges
     if($null -ne $changes.templateChanges.toAdd) {
         Write-Debug 'Added'
 
-        $changes.templateChanges.toAdd | ForEach-Object ({
+        [PSCustomObject[]]$templatesToAdd = $changes.templateChanges.toAdd | ForEach-Object ({
             Write-Debug (' ' + $_.name)
+            $_
         })
 
         Write-Debug ''
 
-        Add-Member -InputObject $result -MemberType NoteProperty -Name 'toAdd' -Value $changes.templateChanges.toAdd
+        Add-Member -InputObject $result -MemberType NoteProperty -Name 'toAdd' -Value $templatesToAdd
     }
 
     if($null -ne $changes.templateChanges.toRemove) {
         Write-Debug 'Removed'
 
-        $templatesToRemove = $changes.templateChanges.toRemove | ForEach-Object ({
+        [PSGuid[]]$templatesToRemove = $changes.templateChanges.toRemove | ForEach-Object ({
             Write-Debug (' ' + $_.name)
             $_.id
         })
@@ -1503,7 +1507,7 @@ function Get-RestTemplateChanges
     if($null -ne $changes.templateChanges.toChange) {
         Write-Debug 'Changed'
 
-        $templatesToChange = $changes.templateChanges.toChange | ForEach-Object ({
+        [PSCustomObject[]]$templatesToChange = $changes.templateChanges.toChange | ForEach-Object ({
             Write-Debug (' ' + $_.name)
             # TODO : Consider mapping changes via diff for example
 
@@ -1548,19 +1552,20 @@ function Get-RestTftpFileChanges
     if($null -ne $changes.tftpFileChanges.toAdd) {
         Write-Debug 'Added'
 
-        $changes.tftpFileChanges.toAdd | ForEach-Object ({
+        [PSCustomObject[]]$tftpFilesToAdd = $changes.tftpFileChanges.toAdd | ForEach-Object ({
             Write-Debug (' ' + $_.filePath)
+            $_
         })
 
         Write-Debug ''
 
-        Add-Member -InputObject $result -MemberType NoteProperty -Name 'toAdd' -Value $changes.tftpFileChanges.toAdd
+        Add-Member -InputObject $result -MemberType NoteProperty -Name 'toAdd' -Value $tftpFilesToAdd
     }
 
     if($null -ne $changes.tftpFileChanges.toRemove) {
         Write-Debug 'Removed'
 
-        $tftpFilesToRemove = $changes.tftpFileChanges.toRemove | ForEach-Object ({
+        [Guid[]]$tftpFilesToRemove = $changes.tftpFileChanges.toRemove | ForEach-Object ({
             Write-Debug (' ' + $_.filePath)
 
             $_.id
@@ -1574,18 +1579,18 @@ function Get-RestTftpFileChanges
     if($null -ne $changes.tftpFileChanges.toChange) {
         Write-Debug 'Changed'
 
-        $tftpFilesToChange = $changes.tftpFileChanges.toChange | ForEach-Object ({
+        [PSCustomObject[]]$tftpFilesToChange = $changes.tftpFileChanges.toChange | ForEach-Object ({
             Write-Debug (' ' + $_.filePath)
             # TODO : Consider mapping changes via diff for example
 
             $existingFile = $_
             $file = $changes.tftpFileChanges.files | Where-Object {
-                $_.contentPath -ilike $file.contentPath
+                ($_.name -ilike $existingFile.filePath) 
             }
 
             @{
                 id = $existingFile.id
-                filePath = $existingFile.filePath
+                name = $existingFile.filePath
                 content = $file.content
             }
         })
@@ -1644,7 +1649,7 @@ function Get-RestNetworkDeviceChanges
     if($null -ne $changes.networkDeviceChanges.toChange) {
         Write-Debug 'Changed'
 
-        $networkDevicesToChange = $changes.networkDeviceChanges.toChange | ForEach-Object ({
+        [PSCustomObject[]]$networkDevicesToChange = $changes.networkDeviceChanges.toChange | ForEach-Object ({
             Write-Debug (' ' + $_.device.hostname + '.' + $_.device.domainName)
 
             $device = $_.device
@@ -1697,17 +1702,18 @@ function Get-RestNetworkDeviceChanges
                     if($null -ne $_.templateChanges.parameterChanges.toAdd) {
                         Write-Debug ('    Added')
 
-                        $_.templateChanges.parameterChanges.toAdd | ForEach-Object ({
+                        [PSCustomObject[]]$parametersToAdd = $_.templateChanges.parameterChanges.toAdd | ForEach-Object ({
                             Write-Debug ('     ' + $_.name + ' = [' + $_.value + ']' )
+                            $_
                         })
 
-                        Add-Member -InputObject $parameterChanges -MemberType NoteProperty -Name 'toAdd' -Value $_.templateChanges.parameterChanges.toAdd
+                        Add-Member -InputObject $parameterChanges -MemberType NoteProperty -Name 'toAdd' -Value $parametersToAdd
                     }
 
                     if($null -ne $_.templateChanges.parameterChanges.toRemove) {
                         Write-Debug ('    Removed')
 
-                        $parametersToRemove = $_.templateChanges.parameterChanges.toRemove | ForEach-Object ({
+                        [Guid[]]$parametersToRemove = $_.templateChanges.parameterChanges.toRemove | ForEach-Object ({
                             Write-Debug ('     ' + $_.name + ' = [' + $_.value + ']' )
                             $_.id
                         })
@@ -1718,7 +1724,7 @@ function Get-RestNetworkDeviceChanges
                     if($null -ne $_.templateChanges.parameterChanges.toChange) {
                         Write-Debug ('    Changed')
 
-                        $parametersToChange = $_.templateChanges.parameterChanges.toChange | ForEach-Object ({
+                        [PSCustomObject[]]$parametersToChange = $_.templateChanges.parameterChanges.toChange | ForEach-Object ({
                             $name = $_.name
                             $existingValue = $_.value
                             $value = ($parameters | Where-Object { $_.name -ilike $name }).value
@@ -1752,20 +1758,21 @@ function Get-RestNetworkDeviceChanges
                 {
                     Write-Debug ('   Added')
 
-                    $_.exclusionChanges.toAdd | ForEach-Object ({
+                    [PSCustomObject[]]$exclusionsToAdd = $_.exclusionChanges.toAdd | ForEach-Object ({
                         Write-Debug ('    start = [' + $_.start + '], end [' + $_.end + ']')
+                        $_
                     })
 
                     Write-Debug ''
 
-                    Add-Member -InputObject $dhcpExclusionChanges -MemberType NoteProperty -Name 'toAdd' -Value $_.exclusionChanges.toAdd
+                    Add-Member -InputObject $dhcpExclusionChanges -MemberType NoteProperty -Name 'toAdd' -Value $exclusionsToAdd
                 }
 
                 if($null -ne $_.exclusionChanges.toRemove)
                 {
                     Write-Debug ('   Removed')
 
-                    $exclusionsToRemove = $_.exclusionChanges.toRemove | ForEach-Object ({
+                    [Guid[]]$exclusionsToRemove = $_.exclusionChanges.toRemove | ForEach-Object ({
                         Write-Debug ('    start = [' + $_.start + '], end [' + $_.end + ']')
                         $_.id
                     })
@@ -1813,20 +1820,21 @@ function Get-RestNetworkConnectionChanges
     {
         Write-Debug (' Added')
 
-        $changes.connectionChanges.toAdd | ForEach-Object ({
+        [PSCustomObject[]]$connectionsToAdd = $changes.connectionChanges.toAdd | ForEach-Object ({
             Write-Debug ('  [' + $_.networkDevice + '.' + $_.domainName + ' - ' + $_.interface + '] to [' + $_.uplinkToDevice + '.' + $_.domainName + ' - ' + $_.uplinkToInterface + ']' )
+            $_
         })
 
         Write-Debug ''
 
-        Add-Member -InputObject $result -MemberType NoteProperty -Name 'toAdd' -Value $changes.connectionChanges.toAdd
+        Add-Member -InputObject $result -MemberType NoteProperty -Name 'toAdd' -Value $connectionsToAdd
     }
 
     if($null -ne $changes.connectionChanges.toRemove)
     {
         Write-Debug (' Removed')
 
-        $connectionsToRemove = $changes.connectionChanges.toRemove | ForEach-Object ({
+        [PSCustomObject[]]$connectionsToRemove = $changes.connectionChanges.toRemove | ForEach-Object ({
             Write-Debug ('  [' + $_.networkDevice + '.' + $_.domainName + ' - ' + $_.interface + '] to [' + $_.uplinkToDevice + '.' + $_.domainName + ' - ' + $_.uplinkToInterface + ']' )
             $_.id
         })
@@ -1865,14 +1873,14 @@ function Get-RestChanges
 
     $result = New-Object -TypeName PSCustomObject
 
-    if ($null -ne $deviceTypesRest) {
-        Add-Member -InputObject $result -MemberType NoteProperty -Name 'deviceTypes' -Value $deviceTypesRest
+    if ($null -ne $devicetypesrest) {
+        add-member -inputobject $result -membertype noteproperty -name 'devicetypes' -value $devicetypesrest
     }
-
+    
     if ($null -ne $templatesRest) {
         Add-Member -InputObject $result -MemberType NoteProperty -Name 'templates' -Value $templatesRest
     }
-
+    
     if ($null -ne $tftpFilesRest) {
         Add-Member -InputObject $result -MemberType NoteProperty -Name 'tftpFiles' -Value $tftpFilesRest
     }
@@ -1909,3 +1917,15 @@ $changes = Get-DesignChanges -designFile $designFile -apiBaseUri $apiBaseUri
 $restChanges = Get-RestChanges -changes $changes
 
 # TODO : PUT the rest as JSON to the server here.
+
+$uri = ($apiBaseUri.ToString() + 'api/v0/batch')
+
+$requestSplat = @{
+    UseBasicParsing = $true
+    Uri = $uri
+    Method = 'Post'
+    ContentType = 'application/json'
+    Body = ($restChanges | ConvertTo-Json -Depth 10)
+}
+
+#$result = Invoke-RestMethod @requestSplat 
