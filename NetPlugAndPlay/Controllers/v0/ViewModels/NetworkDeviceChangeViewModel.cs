@@ -23,7 +23,7 @@ namespace NetPlugAndPlay.Controllers.v0.ViewModels
         [JsonProperty("network")]
         public string Network { get; set; }
         [JsonProperty("dhcpRelay")]
-        public bool DHCPRelay { get; set; }
+        public bool? DHCPRelay { get; set; }
         [JsonProperty("dhcpExclusions")]
         public DhcpExclusionChangesViewModel DHCPExclusions { get; set; }
         [JsonProperty("dhcpTftpBootfile")]

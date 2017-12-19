@@ -23,5 +23,7 @@ namespace NetPlugAndPlay.Controllers.v0.ViewModels
         public List<DhcpExclusionAddViewModel> DHCPExclusions { get; set; }
         [JsonProperty("dhcpTftpBootfile")]
         public string DHCPTftpBootfile { get; set; }
+        [JsonProperty("template")]
+        public NetworkDeviceTemplateAddViewModel Template { get; set; }
     }
 }

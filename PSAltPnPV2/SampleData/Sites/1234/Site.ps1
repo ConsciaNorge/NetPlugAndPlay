@@ -13,7 +13,7 @@
             dhcpTftpBootfile = 'config.txt'
         },
         @{
-            hostname         = 'r12340001'
+            hostname         = 'r1234001'
             domainName       = 'nm.local'
             deviceType       = 'C1841'
             iosVersion       = 'XE16.2(33)'
@@ -33,7 +33,7 @@
                     @{ name='deviceRole';         value='Access' }
                 )
             }
-            dhcpRelay        = $false
+            dhcpRelay        = $true
             dhcpExclusions   = @(
                 @{ start='10.100.16.1';       end='10.100.16.100' }
                 @{ start='10.100.16.200';     end='10.100.16.255' }
@@ -78,5 +78,27 @@
             }
         }
     )
-    
+    connections = @(
+        @{
+            domainName         = 'nm.local'
+            networkDevice      = 'l1234011a'
+            interface          = 'GigabitEthernet0/2'
+            uplinkToDevice     = 'r1234001'
+            uplinkToInterface  = 'FastEthernet0/0'
+        },
+        @{
+            domainName         = 'nm.local'
+            networkDevice      = 'l1234011b'
+            interface          = 'GigabitEthernet0/2'
+            uplinkToDevice     = 'l1234011a'
+            uplinkToInterface  = 'GigabitEthernet0/1'
+        },
+        @{
+            domainName          = 'nm.local'
+            networkDevice       = 'r1234001'
+            interface           = 'FastEthernet0/1'
+            uplinkToDevice      = 'ceRouter1234'
+            uplinkToInterface   = 'FastEthernet0/0'
+        }
+    )
 }

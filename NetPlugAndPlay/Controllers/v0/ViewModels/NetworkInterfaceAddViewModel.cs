@@ -11,6 +11,6 @@ namespace NetPlugAndPlay.Controllers.v0.ViewModels
         [JsonProperty("name")]
         public string Name { get; set; }
         [JsonProperty("interfaceIndex")]
-        public int InterfaceIndex { get; set; }
+        public int? InterfaceIndex { get; set; }
     }
 }
