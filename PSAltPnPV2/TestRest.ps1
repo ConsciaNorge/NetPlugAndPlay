@@ -21,12 +21,12 @@ $body = '{
                                       }
                                   ],
                         "toRemove":  [
-                                         "a453fe73-c50e-43a0-7b93-08d5406efb3f",
-                                         "15f790ff-a045-4d02-7b95-08d5406efb3f"
+                                         "6434a9ea-9a42-415e-ff5f-08d546689415",
+                                         "5a404d3f-02ae-43a5-ff61-08d546689415"
                                      ],
                         "toChange":  [
                                          {
-                                             "id":  "a69c7bc9-7491-40f5-7b94-08d5406efb3f",
+                                             "id":  "30985fed-68bc-4cb8-ff60-08d546689415",
                                              "interfaces":  {
                                                                 "toAdd":  [
                                                                               {
@@ -35,12 +35,12 @@ $body = '{
                                                                               }
                                                                           ],
                                                                 "toRemove":  [
-                                                                                 "1f564bd4-acc3-49e1-1886-08d5406efd76"
+                                                                                 "0da2c40f-4582-423f-0023-08d546689d48"
                                                                              ],
                                                                 "toChange":  [
                                                                                  {
                                                                                      "name":  "FastEthernet0/1",
-                                                                                     "id":  "9bb65994-f1e5-4fa3-1887-08d5406efd76",
+                                                                                     "id":  "637df770-7fc0-4b32-0024-08d546689d48",
                                                                                      "interfaceIndex":  0
                                                                                  }
                                                                              ]
@@ -57,7 +57,7 @@ $body = '{
                                 ],
                       "toChange":  [
                                        {
-                                           "id":  "a3f61881-2da1-46cb-c754-08d5406f0340",
+                                           "id":  "2362cf64-fd27-43cd-e007-08d54668a9e4",
                                            "name":  "r12340001",
                                            "content":  "service timestamps log datetime msec show-timezone\r\nservice password-encryption\r\n!\r\nfile prompt quiet\r\n!\r\nhostname $hostname\r\nip domain-name $domainName\r\n!\r\naaa new-model\r\naaa authentication login default local\r\naaa authentication enable default enable\r\naaa authorization console\r\naaa authorization exec default local\r\n!\r\nenable secret $enableSecret\r\n!\r\ninterface FastEthernet0/0\r\n ip address $ipAddress $subnetMask\r\n ip helper-address $dhcpServer\r\n no shut\r\n!\r\ninterface FastEthernet0/1\r\n ip address $uplinkAddress $uplinkSubnetMask\r\n no shut\r\n!\r\nip route 0.0.0.0 0.0.0.0 $defaultGateway\r\n!\r\nusername admin priv 15 secret Minions12345\r\n!\r\nip access-list standard ACL_CDP_SNOOPER\r\n permit host $automationServer\r\n!\r\nline vty 0 4\r\n login authentication default\r\n transport input telnet\r\n access-class ACL_CDP_SNOOPER in\r\n!\r\nlogging host $syslogServer\r\nlogging trap 7\r\n!\r\nntp server 10.100.1.1\r\n!\r\nend"
                                        }
@@ -74,37 +74,97 @@ $body = '{
                                        {
                                            "content":  "service timestamps log datetime msec show-timezone\r\nservice password-encryption\r\n!\r\nfile prompt quiet\r\n!\r\nhostname $hostname\r\nip domain-name $domainName\r\n!\r\naaa new-model\r\naaa authentication login default local\r\naaa authentication enable default enable\r\naaa authorization console\r\naaa authorization exec default local\r\n!\r\nvtp mode transparent\r\n!\r\nint vlan 1\r\n ip address dhcp\r\n!\r\nusername $telnetUsername privilege 15 secret $telnetPassword\r\n!\r\nip access-list standard ACL_CDP_SNOOPER\r\n permit $tftpServer 0.0.0.0\r\n!\r\nline vty 0 15\r\n login authentication default\r\n transport input telnet\r\n access-class ACL_CDP_SNOOPER in\r\n!\r\nlogging host $syslogServer\r\nlogging trap 7\r\n!\r\nntp server 10.100.1.1\r\n!\r\nkron policy-list loadConfig\r\n cli send log $deviceReadyMessage\r\n!\r\nkron occurrence loadConfig in 1 recurring\r\n policy-list loadConfig\r\n!\r\nend",
                                            "name":  "unprovisioned.config.txt",
-                                           "id":  "44e19e1e-f4af-4aa1-6381-08d5406f1f5d"
+                                           "id":  "9b5d228b-4ff3-4862-ab2f-08d54668d827"
                                        }
                                    ]
                   },
     "networkDevices":  {
+                           "toAdd":  [
+                                         {
+                                             "dhcpTftpBootfile":  "unprovisioned.config.txt",
+                                             "dhcpExclusions":  [
+                                                                    {
+                                                                        "start":  "10.100.16.1",
+                                                                        "end":  "10.100.16.100"
+                                                                    },
+                                                                    {
+                                                                        "start":  "10.100.16.200",
+                                                                        "end":  "10.100.16.255"
+                                                                    }
+                                                                ],
+                                             "description":  "Edge router",
+                                             "hostname":  "r12340001",
+                                             "iosVersion":  "XE16.2(33)",
+                                             "dhcpRelay":  false,
+                                             "deviceType":  "C1841",
+                                             "domainName":  "nm.local",
+                                             "template":  {
+                                                              "description":  "Current configuration",
+                                                              "name":  "r12340001",
+                                                              "parameters":  [
+                                                                                 {
+                                                                                     "value":  "172.20.2.2",
+                                                                                     "name":  "uplinkAddress"
+                                                                                 },
+                                                                                 {
+                                                                                     "value":  "255.255.255.252",
+                                                                                     "name":  "uplinkSubnetMask"
+                                                                                 },
+                                                                                 {
+                                                                                     "value":  "172.20.2.1",
+                                                                                     "name":  "defaultGateway"
+                                                                                 },
+                                                                                 {
+                                                                                     "value":  "Minions12345",
+                                                                                     "name":  "enableSecret"
+                                                                                 },
+                                                                                 {
+                                                                                     "value":  "Rocket Raccoon",
+                                                                                     "name":  "snmpContact"
+                                                                                 },
+                                                                                 {
+                                                                                     "value":  "12345",
+                                                                                     "name":  "snmpLocation"
+                                                                                 },
+                                                                                 {
+                                                                                     "value":  "My name is Jonas",
+                                                                                     "name":  "deviceDescription"
+                                                                                 },
+                                                                                 {
+                                                                                     "value":  "Access",
+                                                                                     "name":  "deviceRole"
+                                                                                 },
+                                                                                 {
+                                                                                     "value":  "r12340001",
+                                                                                     "name":  "hostname"
+                                                                                 },
+                                                                                 {
+                                                                                     "value":  "nm.local",
+                                                                                     "name":  "domainName"
+                                                                                 },
+                                                                                 {
+                                                                                     "value":  "C1841",
+                                                                                     "name":  "deviceType"
+                                                                                 },
+                                                                                 {
+                                                                                     "value":  "255.255.255.0",
+                                                                                     "name":  "subnetMask"
+                                                                                 }
+                                                                             ]
+                                                          },
+                                             "ipAddress":  "10.100.16.1/24"
+                                         }
+                                     ],
+                           "toRemove":  [
+                                            "2720e5d8-7225-4795-58e4-08d54668ad9b"
+                                        ],
                            "toChange":  [
                                             {
-                                                "id":  "ec0f6545-d747-4246-32f3-08d5406f04e3",
+                                                "id":  "5757ab83-cddd-4530-58e3-08d54668ad9b",
                                                 "description":  "CERouter provided by service provider. Not managed"
                                             },
                                             {
-                                                "id":  "9ddf1156-4670-4d42-32f4-08d5406f04e3",
-                                                "dhcpRelay":  false,
-                                                "dhcpExclusions":  {
-                                                                       "toAdd":  [
-                                                                                     {
-                                                                                         "start":  "10.100.16.1",
-                                                                                         "end":  "10.100.16.100"
-                                                                                     },
-                                                                                     {
-                                                                                         "start":  "10.100.16.200",
-                                                                                         "end":  "10.100.16.255"
-                                                                                     }
-                                                                                 ],
-                                                                       "toRemove":  [
-                                                                                        "deca0d91-75c0-4dc2-b643-08d5406f06a1"
-                                                                                    ]
-                                                                   }
-                                            },
-                                            {
-                                                "id":  "abc812fc-1904-406d-32f5-08d5406f04e3",
+                                                "id":  "688d0d51-e3bd-493e-58e5-08d54668ad9b",
                                                 "deviceType":  "C2960-24PS-TT-L",
                                                 "template":  {
                                                                  "parameters":  {
@@ -115,11 +175,11 @@ $body = '{
                                                                                                   }
                                                                                               ],
                                                                                     "toRemove":  [
-                                                                                                     "97e27b6a-3c98-4c5c-ed5d-08d5406f080b"
+                                                                                                     "4c474587-6b2d-433e-397e-08d54668b406"
                                                                                                  ],
                                                                                     "toChange":  [
                                                                                                      {
-                                                                                                         "id":  "dac2795a-aa5d-46c1-ed61-08d5406f080b",
+                                                                                                         "id":  "41cdb084-ff7e-4233-3982-08d54668b406",
                                                                                                          "name":  "deviceType",
                                                                                                          "value":  "C2960-24PS-TT-L"
                                                                                                      }
@@ -128,14 +188,14 @@ $body = '{
                                                              }
                                             },
                                             {
-                                                "id":  "f34520e1-521c-48fc-32f6-08d5406f04e3",
+                                                "id":  "b6202bb6-9cfb-4d1b-58e6-08d54668ad9b",
                                                 "deviceType":  "C2960-24PS-TT-L",
                                                 "template":  {
                                                                  "description":  "Current configuration blah",
                                                                  "parameters":  {
                                                                                     "toChange":  [
                                                                                                      {
-                                                                                                         "id":  "94829361-c436-4aa9-ed6c-08d5406f080b",
+                                                                                                         "id":  "62b49390-3d99-4ebe-398d-08d54668b406",
                                                                                                          "name":  "deviceType",
                                                                                                          "value":  "C2960-24PS-TT-L"
                                                                                                      }
@@ -146,17 +206,10 @@ $body = '{
                                         ]
                        },
     "connections":  {
-                        "toAdd":  [
-                                      {
-                                          "uplinkToDevice":  "l1234011a",
-                                          "networkDevice":  "l1234011b",
-                                          "uplinkToInterface":  "GigabitEthernet0/1",
-                                          "interface":  "FastEthernet0/2",
-                                          "domainName":  "nm.local"
-                                      }
-                                  ],
                         "toRemove":  [
-                                         "16d76a22-56eb-4f23-2a46-08d5406f13ef"
+                                         "f53948cb-7612-4c76-a794-08d54668c8ab",
+                                         "65321238-89e3-4bf9-a795-08d54668c8ab",
+                                         "2caab54e-d724-45da-a796-08d54668c8ab"
                                      ]
                     }
 }'

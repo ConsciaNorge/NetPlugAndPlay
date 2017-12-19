@@ -1494,7 +1494,7 @@ function Get-RestTemplateChanges
     if($null -ne $changes.templateChanges.toRemove) {
         Write-Debug 'Removed'
 
-        [PSGuid[]]$templatesToRemove = $changes.templateChanges.toRemove | ForEach-Object ({
+        [Guid[]]$templatesToRemove = $changes.templateChanges.toRemove | ForEach-Object ({
             Write-Debug (' ' + $_.name)
             $_.id
         })
@@ -1553,7 +1553,7 @@ function Get-RestTftpFileChanges
         Write-Debug 'Added'
 
         [PSCustomObject[]]$tftpFilesToAdd = $changes.tftpFileChanges.toAdd | ForEach-Object ({
-            Write-Debug (' ' + $_.filePath)
+            Write-Debug (' ' + $_.name)
             $_
         })
 
@@ -1623,19 +1623,20 @@ function Get-RestNetworkDeviceChanges
     if($null -ne $changes.networkDeviceChanges.toAdd) {
         Write-Debug 'Added'
 
-        $changes.networkDeviceChanges.toAdd | ForEach-Object ({
+        [PSCustomObject[]]$networkDevicesToAdd = $changes.networkDeviceChanges.toAdd | ForEach-Object ({
             Write-Debug (' ' + $_.hostname + '.' + $_.domainName)
+            $_
         })
 
         Write-Debug ''
 
-        Add-Member -InputObject $result -MemberType NoteProperty -Name 'toAdd' -Value $changes.networkDeviceChanges.toAdd
+        Add-Member -InputObject $result -MemberType NoteProperty -Name 'toAdd' -Value $networkDevicesToAdd
     }
 
     if($null -ne $changes.networkDeviceChanges.toRemove) {
         Write-Debug 'Removed'
 
-        $networkDevicesToRemove = $changes.networkDeviceChanges.toRemove | ForEach-Object ({
+        [Guid[]]$networkDevicesToRemove = $changes.networkDeviceChanges.toRemove | ForEach-Object ({
             Write-Debug (' ' + $_.hostname + '.' + $_.domainName)
 
             $_.id
@@ -1928,4 +1929,4 @@ $requestSplat = @{
     Body = ($restChanges | ConvertTo-Json -Depth 10)
 }
 
-#$result = Invoke-RestMethod @requestSplat 
+$result = Invoke-RestMethod @requestSplat 

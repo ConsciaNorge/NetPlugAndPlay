@@ -35,7 +35,7 @@ namespace NetPlugAndPlay.Migrations
 
                     b.HasIndex("NetworkDeviceId");
 
-                    b.ToTable("DHCPExclusion");
+                    b.ToTable("DhcpExclusions");
                 });
 
             modelBuilder.Entity("NetPlugAndPlay.Models.NetworkDevice", b =>

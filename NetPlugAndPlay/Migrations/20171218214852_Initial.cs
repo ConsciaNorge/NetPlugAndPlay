@@ -94,7 +94,7 @@ namespace NetPlugAndPlay.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DHCPExclusion",
+                name: "DhcpExclusions",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(nullable: false),
@@ -104,9 +104,9 @@ namespace NetPlugAndPlay.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DHCPExclusion", x => x.Id);
+                    table.PrimaryKey("PK_DhcpExclusions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_DHCPExclusion_NetworkDevices_NetworkDeviceId",
+                        name: "FK_DhcpExclusions_NetworkDevices_NetworkDeviceId",
                         column: x => x.NetworkDeviceId,
                         principalTable: "NetworkDevices",
                         principalColumn: "Id",
@@ -187,8 +187,8 @@ namespace NetPlugAndPlay.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_DHCPExclusion_NetworkDeviceId",
-                table: "DHCPExclusion",
+                name: "IX_DhcpExclusions_NetworkDeviceId",
+                table: "DhcpExclusions",
                 column: "NetworkDeviceId");
 
             migrationBuilder.CreateIndex(
@@ -230,7 +230,7 @@ namespace NetPlugAndPlay.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "DHCPExclusion");
+                name: "DhcpExclusions");
 
             migrationBuilder.DropTable(
                 name: "NetworkDeviceLinks");

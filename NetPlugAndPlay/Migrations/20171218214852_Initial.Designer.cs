@@ -11,7 +11,7 @@ using System;
 namespace NetPlugAndPlay.Migrations
 {
     [DbContext(typeof(PnPServerContext))]
-    [Migration("20171211075714_Initial")]
+    [Migration("20171218214852_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,7 +36,7 @@ namespace NetPlugAndPlay.Migrations
 
                     b.HasIndex("NetworkDeviceId");
 
-                    b.ToTable("DHCPExclusion");
+                    b.ToTable("DhcpExclusions");
                 });
 
             modelBuilder.Entity("NetPlugAndPlay.Models.NetworkDevice", b =>

@@ -18,6 +18,8 @@ namespace NetPlugAndPlay.Models
                 .WithMany(b => b.Uplinks);
         }
 
+
+        public DbSet<DHCPExclusion> DhcpExclusions { get; set; }
         public DbSet<NetworkDevice> NetworkDevices { get; set; }
         public DbSet<NetworkDeviceLink> NetworkDeviceLinks { get; set; }
         public DbSet<NetworkDeviceType> NetworkDeviceTypes { get; set; }

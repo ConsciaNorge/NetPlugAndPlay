@@ -74,3 +74,5 @@ Invoke-PnPProcessDevicesSection -HostPort $hostPort -Config $testConfig -Force
 Invoke-PnPProcessConnections -HostPort $hostPort -Config $testConfig -Force -Verbose
 Set-TFTPFile -HostPort $hostPort -FilePath 'unprovisioned.config.txt' -Content (Get-Content -Path $unprovisionedConfigFile -Raw)
 
+$honeybooboo = Join-Path -Path $PSScriptRoot -ChildPath '.\SampleData\honeybooboo.txt' -Resolve
+Set-TFTPFile -HostPort $hostPort -FilePath 'honeybooboo.txt' -Content (Get-Content -Path $honeybooboo -Raw)
