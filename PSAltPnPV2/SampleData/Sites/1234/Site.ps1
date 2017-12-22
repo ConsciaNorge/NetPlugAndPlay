@@ -6,7 +6,7 @@
         @{
             hostname         = 'ceRouter1234'
             domainName       = 'nm.local'
-            deviceType       = 'C1841'
+            deviceType       = 'C2811'
             ipAddress        = '172.20.2.1/30'
             description      = 'CERouter provided by service provider. Not managed'
             dhcpRelay        = $true

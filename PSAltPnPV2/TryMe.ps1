@@ -1897,6 +1897,89 @@ function Get-RestChanges
     return $result
 }
 
+<#
+    Description
+        Scan the contents of the change tree and identify when network devices or network device interfaces
+        have changed. Then identify connections that could be effected by those changes and insert add/remove
+        settings for connections that haven't already been added or removed.
+#>
+function Update-DRC-ExtendedConnectionChanges
+{
+    param(
+        [Parameter(Mandatory)]
+        [Uri]$apiBaseUri,
+
+        [Parameter(Mandatory)]
+        [PSCustomObject]$changes
+    )
+
+    # Get a list of network devices which have changed their device types
+    [PSCustomObject[]]$effectedDevices = $()
+    if(
+        ($null -ne $changes.networkDeviceChanges) -and
+        ($null -ne $changes.networkDeviceChanges.toChange)
+    ) {
+        $changes.networkDeviceChanges.toChange.ForEach({
+            if(
+                ($null -ne $_['changedFields']) -and
+                ($_.changedFields.Contains('deviceType'))
+            ) {
+                $effectedDevices += [PSCustomObject]$_
+            }
+        })
+    }
+
+    [string[]]$effectedDeviceGuids = $effectedDevices.ForEach({ $_.existingDevice.Id.ToString() })
+
+    # Get a list of connections that are effected by network device type changes (but not interface changes)
+    $requestSplat = @{
+        UseBasicParsing = $true
+        Uri = ([Uri]::new($apiBaseUri, '/api/v0/plugandplay/networkdevice/uplinks/bydeviceids')).ToString()
+        Method = 'Post'
+        ContentType = 'application/json'
+        Body = ($effectedDeviceGuids | ConvertTo-Json)
+    }
+
+    $effectedConnections = Invoke-RestMethod @requestSplat 
+
+    # If there are no dependencies return
+    if(Test-CollectionNullOrEmpty -value $effectedConnections) {
+        return
+    }
+
+    # Prepare to make changes
+    if($null -eq $changes.connectionChanges) {
+        $changes.connectionChanges = New-Object -TypeName PSCustomObject
+    }
+
+    $connectionsToAdd = [PSCustomObject[]]@()
+    if($null -eq (Get-Member -InputObject $changes.connectionChanges -Name 'toAdd')) {
+        Add-Member -InputObject $changes.connectionChanges -MemberType NoteProperty -Name 'toAdd' -Value $connectionsToAdd
+    }
+    $connectionsToAdd = $changes.connectionChanges.toAdd
+
+    $connectionsToRemove = [PSCustomObject[]]@()
+    if($null -eq (Get-Member -InputObject $changes.connectionChanges -Name 'toRemove')) {
+        Add-Member -InputObject $changes.connectionChanges -MemberType NoteProperty -Name 'toRemove' -Value $connectionsToRemove
+    }
+    $connectionsToAdd = $changes.connectionChanges.toAdd
+
+    # Process each change by removing the connection and readding it
+    $effectedConnections.ForEach({
+        $changes.connectionChanges.toRemove += $_
+
+        $changes.connectionChanges.toAdd += [PSCustomObject[]]@{
+            domainName = $_.domainName
+            networkDevice = $_.networkDevice
+            interface = $_.interface
+            uplinkToDevice = $_.uplinkToDevice
+            uplinkToInterface = $_.uplinkToInterface
+        }
+    })
+
+    # TODO : Handle when the device interface indices change
+}
+
 Clear-Host
 # $InformationPreference = "Continue"
 $DebugPreference = "Continue"
@@ -1911,6 +1994,7 @@ $changes = Get-DesignChanges -designFile $designFile -apiBaseUri $apiBaseUri
 
 # Show-Changes -changes $changes
 
+Update-DRC-ExtendedConnectionChanges -apiBaseUri $apiBaseUri -changes $changes
 # TODO : Implement design check here
 #     Right now, the code only reads configurations in but doesn't run any design constraint checking.
 #     There should never be a design posted to the server without first checking to make sure it's valid

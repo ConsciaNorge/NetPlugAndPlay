@@ -1,15 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using LibDHCPServer.VolatilePool;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using NetPlugAndPlay.Models;
-using Serilog;
-using NetPlugAndPlay.Controllers.v0.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using NetPlugAndPlay.Controllers.v0.ViewModels;
+using NetPlugAndPlay.Models;
 using NetPlugAndPlay.PlugAndPlayTools.Cisco;
-using LibDHCPServer.VolatilePool;
+using NetPlugAndPlay.Services.DeviceConfigurator;
+using NetPlugAndPlay.Services.DeviceConfigurator.ViewModelExtensions;
+using NetPlugAndPlay.Services.DeviceConfigurator.ViewModels;
+using Serilog;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace NetPlugAndPlay.Controllers.v0
 {
@@ -17,6 +21,88 @@ namespace NetPlugAndPlay.Controllers.v0
     [Route("api/v0/batch")]
     public class BatchController : Controller
     {
+        class UncommitedChanges
+        {
+            public List<NetworkDeviceType> RemovedNetworkDeviceTypes { get; set; } = new List<NetworkDeviceType>();
+            public List<NetworkDeviceType> NetworkDeviceTypes { get; set; } = new List<NetworkDeviceType>();
+            public List<NetworkDevice> RemovedNetworkDevices { get; set; } = new List<NetworkDevice>();
+            public List<NetworkDevice> NetworkDevices { get; set; } = new List<NetworkDevice>();
+            public List<Template> RemovedTemplates { get; set; } = new List<Template>();
+            public List<Template> Templates { get; set; } = new List<Template>();
+            public List<TFTPFile> RemovedTFTPFiles { get; set; } = new List<TFTPFile>();
+            public List<TFTPFile> TFTPFiles { get; set; } = new List<TFTPFile>();
+            public List<NetworkDeviceLink> RemovedConnections { get; set; } = new List<NetworkDeviceLink>();
+            public List<NetworkDeviceLink> Connections { get; set; } = new List<NetworkDeviceLink>();
+
+            internal NetworkDeviceType GetNetworkDeviceType(PnPServerContext dbContext, string name)
+            {
+                var result = NetworkDeviceTypes.Where(x => x.Name == name).FirstOrDefault();
+
+
+                if (result == null)
+                {
+                    if (RemovedNetworkDeviceTypes.Where(x => x.Name == name).Count() > 0)
+                        return null;
+
+                    result = dbContext.NetworkDeviceTypes
+                        .Where(x =>
+                            x.Name == name
+                        )
+                        .Include("Interfaces")
+                        .FirstOrDefault();
+                }
+
+                return result;
+            }
+
+            internal NetworkDevice GetNetworkDevice(PnPServerContext dbContext, string hostname, string domainName)
+            {
+                var result = NetworkDevices
+                    .Where(x =>
+                        x.Hostname == hostname &&
+                        x.DomainName == domainName
+                    )
+                    .FirstOrDefault();
+
+                if (result == null)
+                {
+                    if (NetworkDevices
+                        .Where(x =>
+                            x.Hostname == hostname &&
+                            x.DomainName == domainName
+                        )
+                        .Count() > 0)
+                        return null;
+
+                    result = dbContext.NetworkDevices
+                        .Where(x =>
+                            x.Hostname == hostname &&
+                            x.DomainName == domainName
+                        )
+                        .Include("DeviceType.Interfaces")
+                        .Include("DHCPExclusions")
+                        .FirstOrDefault();
+                }
+
+                return result;
+            }
+
+            internal Template GetTemplate(PnPServerContext dbContext, string name)
+            {
+                var result = Templates.Where(x => x.Name == name).FirstOrDefault();
+
+                if(result == null)
+                {
+                    if (RemovedTemplates.Where(x => x.Name == name).Count() > 0)
+                        return null;
+
+                    result = dbContext.Templates.Where(x => x.Name == name).FirstOrDefault();
+                }
+
+                return result;
+            }
+        }
+
         // PUT api/values/5
         [HttpPost()]
         public async Task<IActionResult> Put(
@@ -27,49 +113,58 @@ namespace NetPlugAndPlay.Controllers.v0
         {
             Log.Logger.Here().Debug("PUT " + Url.ToString() + " called from " + HttpContext.Connection.RemoteIpAddress.ToString());
 
+            var uncommitedChanges = new UncommitedChanges();
+
             var result = new List<string>();
 
             try
             {
-                Log.Logger.Here().Debug(" Processing removals from incoming changes");
-                result.AddRange(await ProcessRemovals(dbContext, changes));
+                Log.Logger.Here().Debug(" Processing templates from incoming changes");
+                result.AddRange(await ProcessTemplates(dbContext, changes, uncommitedChanges));
             }
             catch (Exception e)
             {
-                Log.Logger.Here().Debug(e, "Failed to queue removal of objects per request");
+                Log.Logger.Here().Debug(e, "Failed to queue template objects per request");
                 return BadRequest();
             }
 
             try
             {
-                Log.Logger.Here().Debug(" Processing changes from incoming changes");
-                result.AddRange(ProcessChanges(dbContext, changes));
+                Log.Logger.Here().Debug(" Processing TFTP files from incoming changes");
+                result.AddRange(await ProcessTFTPFiles(dbContext, changes, uncommitedChanges));
             }
             catch (Exception e)
             {
-                Log.Logger.Here().Debug(e, "Failed to queue changes of objects per request");
+                Log.Logger.Here().Debug(e, "Failed to queue TFTP file objects per request");
                 return BadRequest();
             }
 
             try
             {
-                Log.Logger.Here().Debug(" Processing additions from incoming changes");
-                result.AddRange(ProcessAdditions(dbContext, changes));
+                Log.Logger.Here().Debug(" Processing network device types from incoming changes");
+                result.AddRange(await ProcessNetworkDeviceTypes(dbContext, changes, uncommitedChanges));
             }
             catch (Exception e)
             {
-                Log.Logger.Here().Debug(e, "Failed to queue additions of objects per request");
+                Log.Logger.Here().Debug(e, "Failed to queue network device type of objects per request");
                 return BadRequest();
             }
 
-            Log.Logger.Here().Debug("Applying changes");
-            await dbContext.SaveChangesAsync();
-            result.Add("Applying changes to the database");
+            try
+            {
+                Log.Logger.Here().Debug(" Processing network devices from incoming changes");
+                result.AddRange(await ProcessNetworkDevices(dbContext, changes, uncommitedChanges));
+            }
+            catch (Exception e)
+            {
+                Log.Logger.Here().Debug(e, "Failed to queue network device of objects per request");
+                return BadRequest();
+            }
 
             try
             {
                 Log.Logger.Here().Debug(" Processing connectionsfrom incoming changes");
-                result.AddRange(ProcessConnections(dbContext, changes));
+                result.AddRange(await ProcessConnections(dbContext, changes, uncommitedChanges));
             }
             catch (Exception e)
             {
@@ -87,20 +182,84 @@ namespace NetPlugAndPlay.Controllers.v0
             });
         }
 
-        private IEnumerable<string> ProcessConnections(PnPServerContext dbContext, BatchPutViewModel changes)
+        private async Task<List<string>> ProcessTemplates(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
-            Log.Logger.Here().Debug("  Processing connection removals");
-            result.AddRange(ProcessConnectionRemovals(dbContext, changes));
+            Log.Logger.Here().Debug("  Processing removal of templates");
+            result.AddRange(await ProcessTemplateRemovals(dbContext, changes, uncommitedChanges));
 
-            Log.Logger.Here().Debug("  Processing connection additions");
-            result.AddRange(ProcessConnectionAdditions(dbContext, changes));
+            Log.Logger.Here().Debug("  Processing addition of templates");
+            result.AddRange(ProcessTemplateAdditions(dbContext, changes, uncommitedChanges));
+
+            Log.Logger.Here().Debug("  Processing changes of templates");
+            result.AddRange(await ProcessTemplateChanges(dbContext, changes, uncommitedChanges));
 
             return result;
         }
 
-        private List<string> ProcessConnectionAdditions(PnPServerContext dbContext, BatchPutViewModel changes)
+        private async Task<List<string>> ProcessTFTPFiles(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
+        {
+            var result = new List<string>();
+
+            Log.Logger.Here().Debug("  Processing removal of tftp files");
+            result.AddRange(await ProcessTFTPFileRemovals(dbContext, changes, uncommitedChanges));
+
+            Log.Logger.Here().Debug("  Processing addition of tftp files");
+            result.AddRange(ProcessTFTPFileAdditions(dbContext, changes, uncommitedChanges));
+
+            Log.Logger.Here().Debug("  Processing changes of tftp files");
+            result.AddRange(await ProcessTFTPFileChanges(dbContext, changes, uncommitedChanges));
+
+            return result;
+        }
+
+        private async Task<List<string>> ProcessNetworkDeviceTypes(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
+        {
+            var result = new List<string>();
+
+            Log.Logger.Here().Debug("  Processing removal of network device types");
+            result.AddRange(await ProcessNetworkDeviceTypeRemovals(dbContext, changes, uncommitedChanges));
+
+            Log.Logger.Here().Debug("  Processing addition of network device types");
+            result.AddRange(ProcessNetworkDeviceTypeAdditions(dbContext, changes, uncommitedChanges));
+
+            Log.Logger.Here().Debug("  Processing changes of network device types");
+            result.AddRange(await ProcessNetworkDeviceTypeChanges(dbContext, changes, uncommitedChanges));
+
+            return result;
+        }
+
+        private async Task<List<string>> ProcessNetworkDevices(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
+        {
+            var result = new List<string>();
+
+            Log.Logger.Here().Debug("  Processing removal of network devices");
+            result.AddRange(await ProcessNetworkDeviceRemovals(dbContext, changes, uncommitedChanges));
+
+            Log.Logger.Here().Debug("  Processing addition of network devices");
+            result.AddRange(ProcessNetworkDeviceAdditions(dbContext, changes, uncommitedChanges));
+
+            Log.Logger.Here().Debug("  Processing changes of network devices");
+            result.AddRange(await ProcessNetworkDeviceChanges(dbContext, changes, uncommitedChanges));
+
+            return result;
+        }
+
+        private async Task<List<string>> ProcessConnections(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChange)
+        {
+            var result = new List<string>();
+
+            Log.Logger.Here().Debug("  Processing connection removals");
+            result.AddRange(await ProcessConnectionRemovals(dbContext, changes, uncommitedChange));
+
+            Log.Logger.Here().Debug("  Processing connection additions");
+            result.AddRange(ProcessConnectionAdditions(dbContext, changes, uncommitedChange));
+
+            return result;
+        }
+
+        private List<string> ProcessConnectionAdditions(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChange)
         {
             var result = new List<string>();
 
@@ -149,13 +308,7 @@ namespace NetPlugAndPlay.Controllers.v0
             var connectionsToAdd = new List<NetworkDeviceLink>();
             foreach(var item in changes.Connections.ToAdd)
             {
-                var networkDevice = dbContext.NetworkDevices
-                    .Where(x =>
-                        x.Hostname == item.NetworkDevice &&
-                        x.DomainName == item.DomainName
-                    )
-                    .Include("DeviceType.Interfaces")
-                    .FirstOrDefault();
+                var networkDevice = uncommitedChange.GetNetworkDevice(dbContext, item.NetworkDevice, item.DomainName);
 
                 if (networkDevice == null)
                     throw new Exception("Can't find network device " + item.NetworkDevice + "." + item.DomainName + " when trying to add a connection");
@@ -169,13 +322,7 @@ namespace NetPlugAndPlay.Controllers.v0
                 if (networkInterface == null)
                     throw new Exception("Can't find network interface " + item.Interface + " on network device " + item.NetworkDevice + "." + item.DomainName);
 
-                var uplinkDevice = dbContext.NetworkDevices
-                    .Where(x =>
-                        x.Hostname == item.UplinkToDevice &&
-                        x.DomainName == item.DomainName
-                    )
-                    .Include("DeviceType.Interfaces")
-                    .FirstOrDefault();
+                var uplinkDevice = uncommitedChange.GetNetworkDevice(dbContext, item.UplinkToDevice, item.DomainName);
 
                 if (uplinkDevice == null)
                     throw new Exception("Can't find network device " + item.NetworkDevice + "." + item.DomainName + " when trying to add a connection");
@@ -208,27 +355,7 @@ namespace NetPlugAndPlay.Controllers.v0
             return result;
         }
 
-
-        private List<string> ProcessChanges(PnPServerContext dbContext, BatchPutViewModel changes)
-        {
-            var result = new List<string>();
-
-            Log.Logger.Here().Debug("  Processing changes of templates");
-            result.AddRange(ProcessTemplateChanges(dbContext, changes));
-
-            Log.Logger.Here().Debug("  Processing changes of tftp files");
-            result.AddRange(ProcessTFTPFileChanges(dbContext, changes));
-
-            Log.Logger.Here().Debug("  Processing changes of network device types");
-            result.AddRange(ProcessNetworkDeviceTypeChanges(dbContext, changes));
-
-            Log.Logger.Here().Debug("  Processing changes of network devices");
-            result.AddRange(ProcessNetworkDeviceChanges(dbContext, changes));
-
-            return result;
-        }
-
-        private IEnumerable<string> ProcessNetworkDeviceChanges(PnPServerContext dbContext, BatchPutViewModel changes)
+        private async Task<List<string>> ProcessNetworkDeviceChanges(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
@@ -246,18 +373,35 @@ namespace NetPlugAndPlay.Controllers.v0
                     .Where(x =>
                         x.Id == device.Id
                     )
+                    .Include("DeviceType.Interfaces")
                     .Include("DHCPExclusions")
                     .FirstOrDefault();
 
                 if (existingDevice == null)
                     throw new Exception("Failed to find network device with id " + device.Id.ToString());
 
+                // Start tracking changes to the DHCP pool for the device
+                var dhcpChanges = new DHCPPoolChangeViewModel
+                {
+                    ExistingDHCPRelay = existingDevice.DHCPRelay,
+                    ExistingPrefix = NetworkPrefix.Parse(existingDevice.Network),
+                    ExistingReservations = (existingDevice.DHCPExclusions == null) ?
+                        null :
+                        existingDevice.DHCPExclusions
+                            .Select(x =>
+                                new IPRange
+                                {
+                                    Start = IPAddress.Parse(x.Start),
+                                    End = IPAddress.Parse(x.End)
+                                }
+                            )
+                            .ToList()
+                };
+
                 Log.Logger.Here().Debug("     Changing network device field values for " + existingDevice.Hostname + "." + existingDevice.DomainName);
                 if (device.DeviceType != null)
                 {
-                    var deviceType = dbContext.NetworkDeviceTypes
-                        .Where(x => x.Name == device.DeviceType)
-                        .FirstOrDefault();
+                    var deviceType = uncommitedChanges.GetNetworkDeviceType(dbContext, device.DeviceType);
 
                     if (deviceType == null)
                         throw new Exception("Failed to find the device type " + device.DeviceType + " for " + existingDevice.Hostname + "." + existingDevice.DomainName);
@@ -270,11 +414,17 @@ namespace NetPlugAndPlay.Controllers.v0
                 if (device.IPAddress != null)
                 {
                     var prefix = NetworkPrefix.Parse(device.IPAddress);
+                    var baseNetwork = prefix.BaseNetwork;
+
                     existingDevice.IPAddress = prefix.Network.ToString();
-                    existingDevice.Network = prefix.BaseNetwork.ToString();
+                    existingDevice.Network = baseNetwork.ToString();
                 }
+
                 if (device.DHCPRelay.HasValue) { existingDevice.DHCPRelay = device.DHCPRelay.Value; }
                 if (device.DHCPTftpBootfile != null) { existingDevice.DHCPTftpBootfile = device.DHCPTftpBootfile; }
+
+                dhcpChanges.DHCPRelay = existingDevice.DHCPRelay;
+                dhcpChanges.Prefix = NetworkPrefix.Parse(existingDevice.Network); // TODO : use the base network from above
 
                 if (device.DHCPExclusions != null)
                 {
@@ -318,7 +468,7 @@ namespace NetPlugAndPlay.Controllers.v0
                         result.Add("      Queued addition of DHCP exclusions for" + existingDevice.Hostname + "." + existingDevice.DomainName);
                     }
 
-                    if (device.DHCPExclusions.ToAdd != null && device.DHCPExclusions.ToAdd.Count > 0)
+                    if (device.DHCPExclusions.ToChange != null && device.DHCPExclusions.ToChange.Count > 0)
                     {
                         Log.Logger.Here().Debug("      Queuing changes of DHCP exclusions for" + existingDevice.Hostname + "." + existingDevice.DomainName);
 
@@ -342,6 +492,18 @@ namespace NetPlugAndPlay.Controllers.v0
                         result.Add("      Queued changes of DHCP exclusions for" + existingDevice.Hostname + "." + existingDevice.DomainName);
                     }
                 }
+
+                dhcpChanges.Reservations = (existingDevice.DHCPExclusions == null) ?
+                    null :
+                    existingDevice.DHCPExclusions
+                        .Select(x =>
+                            new IPRange
+                            {
+                                Start = IPAddress.Parse(x.Start),
+                                End = IPAddress.Parse(x.End)
+                            }
+                        )
+                        .ToList();
 
                 if(device.Template != null)
                 {
@@ -461,14 +623,16 @@ namespace NetPlugAndPlay.Controllers.v0
                         result.Add("     Qeueued template configuration changes for " + existingDevice.Hostname + "." + existingDevice.DomainName);
                     }
 
+                    uncommitedChanges.NetworkDevices.Add(existingDevice);
                     dbContext.NetworkDevices.Update(existingDevice);
+                    await DeviceConfigurator.ProcessDHCPChanges(dhcpChanges);
                 }
             }
 
             return result;
         }
 
-        private List<string> ProcessNetworkDeviceTypeChanges(PnPServerContext dbContext, BatchPutViewModel changes)
+        private async Task<List<string>> ProcessNetworkDeviceTypeChanges(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
@@ -482,12 +646,12 @@ namespace NetPlugAndPlay.Controllers.v0
             {
                 Log.Logger.Here().Debug("    Preparing device type " + deviceType.Name + " to change");
 
-                var existingDeviceType = dbContext.NetworkDeviceTypes
+                var existingDeviceType = await dbContext.NetworkDeviceTypes
                     .Where(x => 
                         x.Id == deviceType.Id
                     )
                     .Include("Interfaces")
-                    .FirstOrDefault();
+                    .FirstOrDefaultAsync();
 
                 if (existingDeviceType == null)
                     throw new Exception("Failed to find network device type with id " + deviceType.Id.ToString());
@@ -550,13 +714,14 @@ namespace NetPlugAndPlay.Controllers.v0
                     }
                 }
 
+                uncommitedChanges.NetworkDeviceTypes.Add(existingDeviceType);
                 dbContext.NetworkDeviceTypes.Update(existingDeviceType);
             }
 
             return result;
         }
 
-        private IEnumerable<string> ProcessTemplateChanges(PnPServerContext dbContext, BatchPutViewModel changes)
+        private async Task<List<string>> ProcessTemplateChanges(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
@@ -569,11 +734,11 @@ namespace NetPlugAndPlay.Controllers.v0
             foreach (var template in changes.Templates.ToChange)
             {
                 Log.Logger.Here().Debug("    Preparing TFTP " + template.Name + " to change");
-                var existingTemplate = dbContext.Templates
+                var existingTemplate = await dbContext.Templates
                     .Where(x =>
                         x.Id == template.Id
                     )
-                    .FirstOrDefault();
+                    .FirstOrDefaultAsync();
 
                 if (existingTemplate == null)
                     throw new Exception("Failed to find template with id " + template.Id.ToString());
@@ -581,6 +746,7 @@ namespace NetPlugAndPlay.Controllers.v0
                 existingTemplate.Name = template.Name;
                 existingTemplate.Content = template.Content;
 
+                uncommitedChanges.Templates.Add(existingTemplate);
                 dbContext.Templates.Update(existingTemplate);
 
                 result.Add("    Queued template " + existingTemplate.Name + " to change");
@@ -589,7 +755,7 @@ namespace NetPlugAndPlay.Controllers.v0
             return result;
         }
 
-        private List<string> ProcessTFTPFileChanges(PnPServerContext dbContext, BatchPutViewModel changes)
+        private async Task<List<string>> ProcessTFTPFileChanges(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
@@ -602,11 +768,11 @@ namespace NetPlugAndPlay.Controllers.v0
             foreach(var tftpFile in changes.TFTPFiles.ToChange)
             {
                 Log.Logger.Here().Debug("    Preparing TFTP " + tftpFile.Name + " to change");
-                var existingTftpFile = dbContext.TFTPFiles
+                var existingTftpFile = await dbContext.TFTPFiles
                     .Where(x =>
                         x.Id == tftpFile.Id
                     )
-                    .FirstOrDefault();
+                    .FirstOrDefaultAsync();
 
                 if (existingTftpFile == null)
                     throw new Exception("Failed to find TFTP file with id " + tftpFile.Id.ToString());
@@ -622,29 +788,7 @@ namespace NetPlugAndPlay.Controllers.v0
             return result;
         }
 
-        private List<string> ProcessAdditions(PnPServerContext dbContext, BatchPutViewModel changes)
-        {
-            var result = new List<string>();
-
-            //Log.Logger.Here().Debug("  Processing connection additions");
-            //result.AddRange(ProcessConnectionAdditions(dbContext, changes));
-
-            Log.Logger.Here().Debug("  Processing addition of network devices");
-            result.AddRange(ProcessNetworkDeviceAdditions(dbContext, changes));
-
-            Log.Logger.Here().Debug("  Processing addition of network device types");
-            result.AddRange(ProcessNetworkDeviceTypeAdditions(dbContext, changes));
-
-            Log.Logger.Here().Debug("  Processing addition of templates");
-            result.AddRange(ProcessTemplateAdditions(dbContext, changes));
-
-            Log.Logger.Here().Debug("  Processing addition of tftp files");
-            result.AddRange(ProcessTFTPFileAdditions(dbContext, changes));
-
-            return result;
-        }
-
-        private List<string> ProcessNetworkDeviceAdditions(PnPServerContext dbContext, BatchPutViewModel changes)
+        private List<string> ProcessNetworkDeviceAdditions(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
@@ -655,16 +799,15 @@ namespace NetPlugAndPlay.Controllers.v0
             }
 
             Log.Logger.Here().Debug("    Creating the network device objects specified to be added");
+
             var devicesToAdd =
                 (
                     from device in changes.NetworkDevices.ToAdd
-                    join deviceType in dbContext.NetworkDeviceTypes
-                    on device.DeviceType equals deviceType.Name
                     select new NetworkDevice
                     {
                         Hostname = device.Hostname,
                         DomainName = device.DomainName,
-                        DeviceType = deviceType,
+                        DeviceType = uncommitedChanges.GetNetworkDeviceType(dbContext, device.DeviceType),
                         Description = device.Description,
                         IPAddress = NetworkPrefix.Parse(device.IPAddress).Network.ToString(),
                         Network = NetworkPrefix.Parse(device.IPAddress).BaseNetwork.ToString(),
@@ -686,20 +829,42 @@ namespace NetPlugAndPlay.Controllers.v0
                 .ToList();
 
             Log.Logger.Here().Debug("    Creating the network device template configuration objects specified to be added");
-            var templateConfigurationsToAdd =
-                (
-                    from device in changes.NetworkDevices.ToAdd
-                    where device.Template != null
-                    join template in dbContext.Templates
-                    on device.Template.Name equals template.Name
-                    join networkDevice in devicesToAdd
-                    on (device.Hostname + '.' + device.DomainName) equals (networkDevice.Hostname + '.' + networkDevice.DomainName)
-                    select new TemplateConfiguration
-                    {
-                        NetworkDevice = networkDevice,
-                        Description = device.Template.Description,
-                        Template = template,
-                        Properties = (device.Template.Parameters == null) ?
+
+            var templateConfigurationsToAdd = new List<TemplateConfiguration>();
+            foreach (var device in changes.NetworkDevices.ToAdd)
+            {
+                if (device.Template == null)
+                    continue;
+
+                if (device.Template.Name == null)
+                    throw new Exception("Name not provided for template for device " + device.Hostname + "." + device.DomainName);
+
+                var template = uncommitedChanges.GetTemplate(dbContext, device.Template.Name);
+
+                if (template == null)
+                    throw new Exception("Template " + device.Template.Name + " for device " + device.Hostname + "." + device.DomainName + " does not exist");
+
+                var networkDevice = devicesToAdd
+                    .Where(x =>
+                        x.Hostname == device.Hostname &&
+                        x.DomainName == device.DomainName
+                    )
+                    .FirstOrDefault();
+
+                if (networkDevice == null)
+                    throw new Exception("Failed to find new network device record for " + device.Hostname + "." + device.DomainName);
+
+                var deviceType = uncommitedChanges.GetNetworkDeviceType(dbContext, device.DeviceType);
+
+                if (deviceType == null)
+                    throw new Exception("Network device type " + device.DeviceType + " for device " + device.Hostname + "." + device.DomainName + " does not exist");
+
+                var templateConfigurationToAdd = new TemplateConfiguration
+                {
+                    NetworkDevice = networkDevice,
+                    Description = device.Template.Description,
+                    Template = template,
+                    Properties = (device.Template.Parameters == null) ?
                             null :
                             (
                                 from parameter in device.Template.Parameters
@@ -710,11 +875,13 @@ namespace NetPlugAndPlay.Controllers.v0
                                 }
                             )
                             .ToList()
-                    }
-                )
-                .ToList();
+                };
+
+                templateConfigurationsToAdd.Add(templateConfigurationToAdd);
+            }
 
             Log.Logger.Here().Debug("    Queuing " + devicesToAdd.Count.ToString() + " network devices to be added");
+            uncommitedChanges.NetworkDevices.AddRange(devicesToAdd);
             dbContext.NetworkDevices.AddRange(devicesToAdd);
             result.Add("    Queued " + devicesToAdd.Count.ToString() + " network devices to be added");
 
@@ -725,7 +892,7 @@ namespace NetPlugAndPlay.Controllers.v0
             return result;
         }
 
-        private List<string> ProcessNetworkDeviceTypeAdditions(PnPServerContext dbContext, BatchPutViewModel changes)
+        private List<string> ProcessNetworkDeviceTypeAdditions(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
@@ -753,6 +920,7 @@ namespace NetPlugAndPlay.Controllers.v0
                     .ToList();
 
             Log.Logger.Here().Debug("    Queuing " + deviceTypesToAdd.Count.ToString() + " network device types to be added");
+            uncommitedChanges.NetworkDeviceTypes.AddRange(deviceTypesToAdd);
             dbContext.NetworkDeviceTypes.AddRange(deviceTypesToAdd);
             result.Add("    Queued " + deviceTypesToAdd.Count.ToString() + " network device types to be added");
 
@@ -783,7 +951,7 @@ namespace NetPlugAndPlay.Controllers.v0
             return result;
         }
 
-        private List<string> ProcessTemplateAdditions(PnPServerContext dbContext, BatchPutViewModel changes)
+        private List<string> ProcessTemplateAdditions(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
@@ -794,25 +962,25 @@ namespace NetPlugAndPlay.Controllers.v0
             }
 
             Log.Logger.Here().Debug("    Loading the templates specified to be added");
+            var templatesToAdd = changes.Templates.ToAdd
+                .Select(x =>
+                    new Template
+                    {
+                        Name = x.Name,
+                        Content = x.Content
+                    }
+                )
+                .ToList();
 
             Log.Logger.Here().Debug("    Queuing " + changes.Templates.ToAdd.Count.ToString() + " to be added");
-            dbContext.Templates.AddRange(
-                changes.Templates.ToAdd
-                    .Select(x =>
-                        new Template
-                        {
-                            Name = x.Name,
-                            Content = x.Content
-                        }
-                    )
-                    .ToList()
-                );
+            uncommitedChanges.Templates.AddRange(templatesToAdd);
+            dbContext.Templates.AddRange(templatesToAdd);
             result.Add("    Queued " + changes.Templates.ToAdd.Count.ToString() + " to be added");
 
             return result;
         }
 
-        private List<string> ProcessTFTPFileAdditions(PnPServerContext dbContext, BatchPutViewModel changes)
+        private List<string> ProcessTFTPFileAdditions(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
@@ -838,29 +1006,7 @@ namespace NetPlugAndPlay.Controllers.v0
             return result;
         }
 
-        private async Task<List<string>> ProcessRemovals(
-            PnPServerContext dbContext,
-            BatchPutViewModel changes
-        )
-        {
-            var result = new List<string>();
-
-            Log.Logger.Here().Debug("  Processing removal of network devices");
-            result.AddRange(await ProcessNetworkDeviceRemovals(dbContext, changes));
-
-            Log.Logger.Here().Debug("  Processing removal of network device types");
-            result.AddRange(await ProcessNetworkDeviceTypeRemovals(dbContext, changes));
-
-            Log.Logger.Here().Debug("  Processing removal of templates");
-            result.AddRange(await ProcessTemplateRemovals(dbContext, changes));
-
-            Log.Logger.Here().Debug("  Processing removal of tftp files");
-            result.AddRange(await ProcessTFTPFileRemovals(dbContext, changes));
-
-            return result;
-        }
-
-        private async Task<IEnumerable<string>> ProcessTFTPFileRemovals(PnPServerContext dbContext, BatchPutViewModel changes)
+        private async Task<IEnumerable<string>> ProcessTFTPFileRemovals(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
@@ -879,13 +1025,14 @@ namespace NetPlugAndPlay.Controllers.v0
                     .ToListAsync();
 
             Log.Logger.Here().Debug("    Queuing " + tftpFilesToRemove.Count.ToString() + " to remove");
+            uncommitedChanges.RemovedTFTPFiles.AddRange(tftpFilesToRemove);
             dbContext.TFTPFiles.RemoveRange(tftpFilesToRemove);
             result.Add("    Queued " + tftpFilesToRemove.Count.ToString() + " to remove");
 
             return result;
         }
 
-        private async Task<List<string>> ProcessTemplateRemovals(PnPServerContext dbContext, BatchPutViewModel changes)
+        private async Task<List<string>> ProcessTemplateRemovals(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
@@ -904,13 +1051,14 @@ namespace NetPlugAndPlay.Controllers.v0
                     .ToListAsync();
 
             Log.Logger.Here().Debug("    Queuing " + templatesToRemove.Count.ToString() + " to remove");
+            uncommitedChanges.RemovedTemplates.AddRange(templatesToRemove);
             dbContext.Templates.RemoveRange(templatesToRemove);
             result.Add("    Queued " + templatesToRemove.Count.ToString() + " to remove");
 
             return result;
         }
 
-        private async Task<List<string>> ProcessNetworkDeviceTypeRemovals(PnPServerContext dbContext, BatchPutViewModel changes)
+        private async Task<List<string>> ProcessNetworkDeviceTypeRemovals(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
@@ -931,6 +1079,8 @@ namespace NetPlugAndPlay.Controllers.v0
 
             if (deviceTypesToRemove == null)
                 throw new Exception("Failes to load the networking device types specified to be removed");
+
+            uncommitedChanges.RemovedNetworkDeviceTypes.AddRange(deviceTypesToRemove);
 
             Log.Logger.Here().Debug("    Building a manifest of networking interfaces to remove correlating to the network devices to remove");
             var interfacesToRemove =
@@ -954,7 +1104,7 @@ namespace NetPlugAndPlay.Controllers.v0
             return result;
         }
 
-        private async Task<List<string>> ProcessNetworkDeviceRemovals(PnPServerContext dbContext, BatchPutViewModel changes)
+        private async Task<List<string>> ProcessNetworkDeviceRemovals(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
@@ -1012,7 +1162,8 @@ namespace NetPlugAndPlay.Controllers.v0
                 result.Add("    Queued " + templateConfigurationsToRemove.Count.ToString() + " for removal");
             }
 
-            // TODO : Remove DHCP pools for removed networks
+            foreach (var device in devicesToRemove)
+                await DeviceConfigurator.NetworkDeviceRemoved(device);
 
             Log.Logger.Here().Debug("    Building a list of the DHCP exclusions to remove");
             var dhcpExclusions =
@@ -1033,13 +1184,14 @@ namespace NetPlugAndPlay.Controllers.v0
             }
 
             Log.Logger.Here().Debug("    Queueing " + devicesToRemove.Count.ToString() + " for removal");
+            uncommitedChanges.RemovedNetworkDevices.AddRange(devicesToRemove);
             dbContext.NetworkDevices.RemoveRange(devicesToRemove);
             result.Add("    Queued " + devicesToRemove.Count.ToString() + " for removal");
 
             return result;
         }
 
-        private List<string> ProcessConnectionRemovals(PnPServerContext dbContext, BatchPutViewModel changes)
+        private async Task<List<string>> ProcessConnectionRemovals(PnPServerContext dbContext, BatchPutViewModel changes, UncommitedChanges uncommitedChanges)
         {
             var result = new List<string>();
 
@@ -1049,13 +1201,19 @@ namespace NetPlugAndPlay.Controllers.v0
                 return result;
             }
 
+            var connectionsToRemove = await dbContext.NetworkDeviceLinks
+                .Where(x =>
+                    changes.Connections.ToRemove.Contains(x.Id)
+                )
+                .ToListAsync();
+
+            uncommitedChanges.RemovedConnections.AddRange(connectionsToRemove);
+
             dbContext.NetworkDeviceLinks
                 .RemoveRange(
-                    dbContext.NetworkDeviceLinks
-                        .Where(x => 
-                            changes.Connections.ToRemove.Contains(x.Id)
-                        )
+                    connectionsToRemove
                 );
+            
             Log.Logger.Here().Debug("   Queued removal of " + changes.Connections.ToRemove.Count + " connections");
             result.AddRange(
                     changes.Connections.ToRemove

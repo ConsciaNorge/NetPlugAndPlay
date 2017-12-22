@@ -348,23 +348,9 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
             )
         {
             var uplinks = await dbContext.NetworkDeviceLinks
-                //.Include("NetworkDevice")
-                //.Include("ConnectedToDevice")
-                .Select(x =>
-                    new NetworkUplinkViewModel
-                    {
-                        Id = x.Id,
-                        DomainName = x.NetworkDevice.DomainName,
-                        NetworkDeviceId = x.NetworkDevice.Id,
-                        NetworkDevice = x.NetworkDevice.Hostname,
-                        InterfaceIndex = x.InterfaceIndex,
-                        Interface = x.NetworkDevice.DeviceType.Interfaces.Where(y => y.InterfaceIndex == x.InterfaceIndex).First().Name,
-                        UplinkToDeviceId = x.ConnectedToDevice.Id,
-                        UplinkToDevice = x.ConnectedToDevice.Hostname,
-                        UplinkToInterfaceIndex = x.ConnectedToInterfaceIndex,
-                        UplinkToInterface = x.ConnectedToDevice.DeviceType.Interfaces.Where(y => y.InterfaceIndex == x.ConnectedToInterfaceIndex).First().Name
-                    }
-                )
+                .Include("NetworkDevice.DeviceType.Interfaces")
+                .Include("ConnectedToDevice.DeviceType.Interfaces")
+                .Include("ConnectedToDevice")
                 .ToListAsync();
 
             if (uplinks == null)
@@ -372,7 +358,88 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
                 return NotFound();
             }
 
-            return new ObjectResult(uplinks);
+            var result = new List<NetworkUplinkViewModel>();
+
+            foreach(var uplink in uplinks)
+            {
+                try
+                {
+                    result.Add(
+                        new NetworkUplinkViewModel
+                        {
+                            Id = uplink.Id,
+                            DomainName = uplink.NetworkDevice.DomainName,
+                            NetworkDeviceId = uplink.NetworkDevice.Id,
+                            NetworkDevice = uplink.NetworkDevice.Hostname,
+                            InterfaceIndex = uplink.InterfaceIndex,
+                            Interface = uplink.NetworkDevice.DeviceType.Interfaces.Where(y => y.InterfaceIndex == uplink.InterfaceIndex).First().Name,
+                            UplinkToDeviceId = uplink.ConnectedToDevice.Id,
+                            UplinkToDevice = uplink.ConnectedToDevice.Hostname,
+                            UplinkToInterfaceIndex = uplink.ConnectedToInterfaceIndex,
+                            UplinkToInterface = uplink.ConnectedToDevice.DeviceType.Interfaces.Where(y => y.InterfaceIndex == uplink.ConnectedToInterfaceIndex).First().Name
+                        }
+                    );
+                }
+                catch(Exception e)
+                {
+                    Log.Logger.Here().Error(e, "Failed to find components of a network uplink");
+                }
+            }
+
+            return new ObjectResult(result);
+        }
+
+        // GET api/values/5
+        [HttpPost("uplinks/bydeviceids")]
+        public async Task<IActionResult> GetUplinksByDeviceIds(
+                [FromServices] PnPServerContext dbContext,
+                [FromBody] List<Guid> deviceIds
+            )
+        {
+            var uplinks = await dbContext.NetworkDeviceLinks
+                .Where(x =>
+                    deviceIds.Contains(x.NetworkDevice.Id) ||
+                    deviceIds.Contains(x.ConnectedToDevice.Id)
+                )
+                .Include("NetworkDevice.DeviceType.Interfaces")
+                .Include("ConnectedToDevice.DeviceType.Interfaces")
+                .Include("ConnectedToDevice")
+                .ToListAsync();
+
+            if (uplinks == null)
+            {
+                return NotFound();
+            }
+
+            var result = new List<NetworkUplinkViewModel>();
+
+            foreach (var uplink in uplinks)
+            {
+                try
+                {
+                    result.Add(
+                        new NetworkUplinkViewModel
+                        {
+                            Id = uplink.Id,
+                            DomainName = uplink.NetworkDevice.DomainName,
+                            NetworkDeviceId = uplink.NetworkDevice.Id,
+                            NetworkDevice = uplink.NetworkDevice.Hostname,
+                            InterfaceIndex = uplink.InterfaceIndex,
+                            Interface = uplink.NetworkDevice.DeviceType.Interfaces.Where(y => y.InterfaceIndex == uplink.InterfaceIndex).First().Name,
+                            UplinkToDeviceId = uplink.ConnectedToDevice.Id,
+                            UplinkToDevice = uplink.ConnectedToDevice.Hostname,
+                            UplinkToInterfaceIndex = uplink.ConnectedToInterfaceIndex,
+                            UplinkToInterface = uplink.ConnectedToDevice.DeviceType.Interfaces.Where(y => y.InterfaceIndex == uplink.ConnectedToInterfaceIndex).First().Name
+                        }
+                    );
+                }
+                catch (Exception e)
+                {
+                    Log.Logger.Here().Error(e, "Failed to find components of a network uplink");
+                }
+            }
+
+            return new ObjectResult(result);
         }
     }
 }

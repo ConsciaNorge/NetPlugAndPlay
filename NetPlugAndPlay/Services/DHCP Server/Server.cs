@@ -101,6 +101,14 @@ namespace NetPlugAndPlay.Services.DHCPServer
             Task.Factory.StartNew(async () => { await _dhcpServer.Start(); });
         }
 
+        internal Task ChangePool(object arg1, ChangeDHCPPoolEventArgs arg2)
+        {
+            return Task.Run(() =>
+            {
+                Log.Logger.Here().Information("Updating DHCP Pool");
+            });
+        }
+
         internal Task RegisterNewPool(object sender, NewDHCPPoolEventArgs ev)
         {
             return Task.Run(() => {

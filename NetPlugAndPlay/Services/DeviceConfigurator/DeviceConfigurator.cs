@@ -14,6 +14,8 @@ using libterminal;
 using Serilog;
 using NetPlugAndPlay.Services.Common.NetworkTools;
 using LibDHCPServer.VolatilePool;
+using NetPlugAndPlay.Services.DeviceConfigurator.ViewModels;
+using NetPlugAndPlay.Services.DeviceConfigurator.ViewModelExtensions;
 
 namespace NetPlugAndPlay.Services.DeviceConfigurator
 {
@@ -340,9 +342,9 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                 Log.Logger.Here().Debug("TFTP Server : " + tftpServerAddress.ToString());
                 Log.Logger.Here().Debug("Domain name : " + device.DomainName);
                 Log.Logger.Here().Debug("Boot filename : " + device.DHCPTftpBootfile);
-                Log.Logger.Here().Debug("Lease duration : " + NetPlugAndPlay.Services.DHCPServer.Server.LeaseDuration.ToString());
-                Log.Logger.Here().Debug("Request time out : " + NetPlugAndPlay.Services.DHCPServer.Server.RequestTimeOut.ToString());
-                Log.Logger.Here().Debug("Maximum incomplete requests : " + NetPlugAndPlay.Services.DHCPServer.Server.MaxIncompleteRequests.ToString());
+                Log.Logger.Here().Debug("Lease duration : " + Server.LeaseDuration.ToString());
+                Log.Logger.Here().Debug("Request time out : " + Server.RequestTimeOut.ToString());
+                Log.Logger.Here().Debug("Maximum incomplete requests : " + Server.MaxIncompleteRequests.ToString());
 
                 var pool = new DhcpPool
                 {
@@ -357,9 +359,9 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                             }
                         )
                         .ToList(),
-                    LeaseDuration = NetPlugAndPlay.Services.DHCPServer.Server.LeaseDuration,
-                    RequestTimeOut = NetPlugAndPlay.Services.DHCPServer.Server.RequestTimeOut,
-                    MaxIncompleteRequests = NetPlugAndPlay.Services.DHCPServer.Server.MaxIncompleteRequests,
+                    LeaseDuration = Server.LeaseDuration,
+                    RequestTimeOut = Server.RequestTimeOut,
+                    MaxIncompleteRequests = Server.MaxIncompleteRequests,
                     PoolOptions = new LeaseOptions
                     {
                         DomainName = device.DomainName,
@@ -368,7 +370,7 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                                 tftpServerAddress.ToString()
                             },
                         BootFile = device.DHCPTftpBootfile,
-                        DNSServers = NetPlugAndPlay.Services.DHCPServer.Server.DNSServers
+                        DNSServers = Server.DNSServers
                     }
                 };
 
@@ -386,6 +388,39 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
         {
             Log.Logger.Here().Information("Network device " + networkDevice.Hostname + "." + networkDevice.DomainName + " changed");
             await Task.Delay(1);
+        }
+
+        public Func<object, ChangeDHCPPoolEventArgs, Task> OnChangeDHCPPool;
+        private async Task SignalChangeDHCPPoolForNetwork(DHCPPoolChangeViewModel changes)
+        {
+            if (OnChangeDHCPPool == null)
+                return;
+
+            Delegate[] invocationList = OnChangeDHCPPool.GetInvocationList();
+            Task[] onChangeDHCPPoolTasks = new Task[invocationList.Length];
+
+            for (int i = 0; i < invocationList.Length; i++)
+            {
+                onChangeDHCPPoolTasks[i] = (
+                    (Func<object, ChangeDHCPPoolEventArgs, Task>)invocationList[i]
+                )(
+                    this,
+                    new ChangeDHCPPoolEventArgs
+                    {
+                        Changes = changes
+                    }
+                );
+            }
+
+            await Task.WhenAll(onChangeDHCPPoolTasks);
+        }
+
+        internal static async Task ProcessDHCPChanges(DHCPPoolChangeViewModel dhcpChanges)
+        {
+            if (!dhcpChanges.Changed())
+                return;
+
+            await Instance.SignalChangeDHCPPoolForNetwork(dhcpChanges);
         }
     }
 }

@@ -76,6 +76,7 @@ namespace NetPlugAndPlay
             syslogServer.OnSyslogMessage += deviceConfigurator.SyslogMessageHandler;
             dhcpServer.OnIPReleased += deviceConfigurator.ForgetIP;
             deviceConfigurator.OnRegisterNewDHCPPool += dhcpServer.RegisterNewPool;
+            deviceConfigurator.OnChangeDHCPPool += dhcpServer.ChangePool;
 
             app.UseStaticFiles();
 
