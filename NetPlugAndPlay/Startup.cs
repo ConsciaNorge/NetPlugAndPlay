@@ -60,11 +60,6 @@ namespace NetPlugAndPlay
             }
 
             Log.Logger = new LoggerConfiguration()
-                //.MinimumLevel.Debug()
-                //.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-                //.Enrich.FromLogContext()
-                //.WriteTo.Console()
-                //.WriteTo.Debug()
                 .ReadFrom.Configuration(Configuration)
                 .CreateLogger();
 
@@ -72,6 +67,8 @@ namespace NetPlugAndPlay
             dhcpServer = new Services.DHCPServer.Server();
             syslogServer = new Services.SyslogServer.SyslogServer();
             deviceConfigurator = new Services.DeviceConfigurator.DeviceConfigurator();
+
+            // TODO : Load the DHCP Pools on startup
 
             syslogServer.OnSyslogMessage += deviceConfigurator.SyslogMessageHandler;
             dhcpServer.OnIPReleased += deviceConfigurator.ForgetIP;

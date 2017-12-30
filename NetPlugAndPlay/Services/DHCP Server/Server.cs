@@ -1,19 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using LibDHCPServer;
-using System.Net;
+﻿using LibDHCPServer;
 using LibDHCPServer.Enums;
+using LibDHCPServer.VolatilePool;
+using libnetworkutility;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using NetPlugAndPlay.Models;
-using Microsoft.EntityFrameworkCore;
-using System.Text;
-using LibDHCPServer.Utility.RemoteAgentIdFormats;
-using LibDHCPServer.VolatilePool;
-using Serilog;
-using System.Text.RegularExpressions;
+using NetPlugAndPlay.Services.Common.NetworkTools;
 using NetPlugAndPlay.Services.DeviceConfigurator;
+using Serilog;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace NetPlugAndPlay.Services.DHCPServer
 {
@@ -101,11 +101,92 @@ namespace NetPlugAndPlay.Services.DHCPServer
             Task.Factory.StartNew(async () => { await _dhcpServer.Start(); });
         }
 
-        internal Task ChangePool(object arg1, ChangeDHCPPoolEventArgs arg2)
+        internal Task ChangePool(object sender, ChangeDHCPPoolEventArgs ev)
         {
             return Task.Run(() =>
             {
                 Log.Logger.Here().Information("Updating DHCP Pool");
+                if(!ev.Changes.ExistingDHCPRelay && !ev.Changes.DHCPRelay)
+                    return;
+
+                if (ev.Changes.ExistingDHCPRelay && !ev.Changes.DHCPRelay)
+                {
+                    // Disable the DHCP pool for the range
+                    PoolManager.DeregisterPool(ev.Changes.ExistingPrefix);
+                }
+                else if(!ev.Changes.ExistingDHCPRelay && ev.Changes.DHCPRelay)
+                {
+                    var prefix = ev.Changes.Prefix;
+
+                    // Add the DHCP pool for the range
+                    var tftpServerAddress = LocalRoutingTable.QueryRoutingInterface(ev.Changes.GatewayAddress);
+
+                    Log.Logger.Here().Information("Registering new DHCP pool for " + prefix.ToString());
+                    Log.Logger.Here().Debug("Exclusions : " + string.Join(",",
+                        ev.Changes.Reservations
+                            .Select(x =>
+                                x.ToString()
+                            )
+                            .ToList()
+                        )
+                    );
+
+                    Log.Logger.Here().Debug("Default gateways : (" + ev.Changes.GatewayAddress.ToString() + ")");
+                    Log.Logger.Here().Debug("TFTP Server : " + tftpServerAddress.ToString());
+                    Log.Logger.Here().Debug("Domain name : " + ev.Changes.DomainName);
+                    Log.Logger.Here().Debug("Boot filename : " + ev.Changes.TFTPBootFile);
+                    Log.Logger.Here().Debug("Lease duration : " + Server.LeaseDuration.ToString());
+                    Log.Logger.Here().Debug("Request time out : " + Server.RequestTimeOut.ToString());
+                    Log.Logger.Here().Debug("Maximum incomplete requests : " + Server.MaxIncompleteRequests.ToString());
+
+                    var pool = new DhcpPool
+                    {
+                        Network = prefix,
+                        DefaultGateways = new List<IPAddress> { ev.Changes.GatewayAddress },
+                        Exclusions = (ev.Changes.Reservations == null) ?
+                            new List<IPRange>() :
+                            ev.Changes.Reservations
+                                .Select(x =>
+                                    new IPRange
+                                    {
+                                        Start = x.Start,
+                                        End = x.End
+                                    }
+                                )
+                                .ToList(),
+                        LeaseDuration = Server.LeaseDuration,
+                        RequestTimeOut = Server.RequestTimeOut,
+                        MaxIncompleteRequests = Server.MaxIncompleteRequests,
+                        PoolOptions = new LeaseOptions
+                        {
+                            DomainName = ev.Changes.DomainName,
+                            TFTPServers = new List<string>
+                            {
+                                tftpServerAddress.ToString()
+                            },
+                            BootFile = ev.Changes.TFTPBootFile,
+                            DNSServers = Server.DNSServers
+                        }
+                    };
+
+                    PoolManager.RegisterPool(pool);
+                }
+                else
+                {
+                    Log.Logger.Here().Information("Modifying DHCP pool for " + ev.Changes.Prefix.ToString());
+
+                    var tftpServerAddress = LocalRoutingTable.QueryRoutingInterface(ev.Changes.GatewayAddress);
+
+                    PoolManager.ModifyPool(
+                            ev.Changes.Prefix,
+                            new List<IPAddress> { ev.Changes.GatewayAddress },
+                            ev.Changes.Reservations,
+                            ev.Changes.DomainName,
+                            ev.Changes.TFTPBootFile,
+                            Server.DNSServers,
+                            tftpServerAddress
+                        );
+                }
             });
         }
 
@@ -220,7 +301,7 @@ namespace NetPlugAndPlay.Services.DHCPServer
                 {
                     Network = prefix,
                     DefaultGateways = new List<IPAddress> { IPAddress.Parse(device.IPAddress) },
-                    Exlusions = device.DHCPExclusions
+                    Exclusions = device.DHCPExclusions
                         .Select(x =>
                             new IPRange {
                                 Start = IPAddress.Parse(x.Start),

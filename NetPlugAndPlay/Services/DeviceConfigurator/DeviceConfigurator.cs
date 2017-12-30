@@ -1,21 +1,22 @@
-﻿using libterminal.Helpers.Model;
+﻿using LibDHCPServer.VolatilePool;
+using libnetworkutility;
+using libterminal;
+using libterminal.Helpers.Model;
 using libterminal.Helpers.Parsers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using NetPlugAndPlay.Models;
+using NetPlugAndPlay.Services.Common.NetworkTools;
+using NetPlugAndPlay.Services.DeviceConfigurator.ViewModelExtensions;
+using NetPlugAndPlay.Services.DeviceConfigurator.ViewModels;
+using NetPlugAndPlay.Services.DHCPServer;
 using NetPlugAndPlay.Services.SyslogServer;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using NetPlugAndPlay.Services.DHCPServer;
-using libterminal;
-using Serilog;
-using NetPlugAndPlay.Services.Common.NetworkTools;
-using LibDHCPServer.VolatilePool;
-using NetPlugAndPlay.Services.DeviceConfigurator.ViewModels;
-using NetPlugAndPlay.Services.DeviceConfigurator.ViewModelExtensions;
 
 namespace NetPlugAndPlay.Services.DeviceConfigurator
 {
@@ -350,7 +351,7 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                 {
                     Network = prefix,
                     DefaultGateways = new List<IPAddress> { IPAddress.Parse(device.IPAddress) },
-                    Exlusions = device.DHCPExclusions
+                    Exclusions = device.DHCPExclusions
                         .Select(x =>
                             new IPRange
                             {

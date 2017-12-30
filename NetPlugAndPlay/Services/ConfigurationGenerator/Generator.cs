@@ -1,4 +1,4 @@
-﻿using IPAddressExtensions;
+﻿using libnetworkutility;
 using Microsoft.EntityFrameworkCore;
 using NetPlugAndPlay.Models;
 using NVelocity;
@@ -42,7 +42,7 @@ namespace NetPlugAndPlay.Services.ConfigurationGenerator
             var address = IPAddress.Parse(ipAddress);
             var relayDevice = dhcpRelayDevices
                 .Where(x =>
-                    LibDHCPServer.VolatilePool.NetworkPrefix.Parse(x.Network).Contains(address)
+                    NetworkPrefix.Parse(x.Network).Contains(address)
                 )
                 .FirstOrDefault();
 
@@ -54,9 +54,9 @@ namespace NetPlugAndPlay.Services.ConfigurationGenerator
             context.Put("hostname", string.Join("", address.GetAddressBytes().Select(x => x.ToString("X2")).ToList()));
             if (relayDevice != null)
                 context.Put("domainName", relayDevice.DomainName);
-            context.Put("tftpServer", address.SourceIP());
-            context.Put("dhcpServer", address.SourceIP());
-            context.Put("syslogServer", address.SourceIP());
+            context.Put("tftpServer", address.GetSourceIP());
+            context.Put("dhcpServer", address.GetSourceIP());
+            context.Put("syslogServer", address.GetSourceIP());
 
             context.Put("telnetUsername", DeviceConfigurator.DeviceConfigurator.TelnetUsername);
             context.Put("telnetPassword", DeviceConfigurator.DeviceConfigurator.TelnetPassword);
@@ -147,7 +147,7 @@ namespace NetPlugAndPlay.Services.ConfigurationGenerator
             var address = IPAddress.Parse(ipAddress);
             var relayDevice = dhcpRelayDevices
                 .Where(x =>
-                    LibDHCPServer.VolatilePool.NetworkPrefix.Parse(x.Network).Contains(address)
+                    NetworkPrefix.Parse(x.Network).Contains(address)
                 )
                 .FirstOrDefault();
 
@@ -160,9 +160,9 @@ namespace NetPlugAndPlay.Services.ConfigurationGenerator
             context.Put("hostname", string.Join("", address.GetAddressBytes().Select(x => x.ToString("X2")).ToList()));
             if (relayDevice != null)
                 context.Put("domainName", relayDevice.DomainName);
-            context.Put("tftpServer", address.SourceIP());
-            context.Put("dhcpServer", address.SourceIP());
-            context.Put("syslogServer", address.SourceIP());
+            context.Put("tftpServer", address.GetSourceIP());
+            context.Put("dhcpServer", address.GetSourceIP());
+            context.Put("syslogServer", address.GetSourceIP());
 
             context.Put("telnetUsername", DeviceConfigurator.DeviceConfigurator.TelnetUsername);
             context.Put("telnetPassword", DeviceConfigurator.DeviceConfigurator.TelnetPassword);

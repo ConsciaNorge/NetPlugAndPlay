@@ -16,6 +16,15 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator.ViewModelExtensions
             if (!changes.Prefix.Equals(changes.ExistingPrefix))
                 return true;
 
+            if (!changes.GatewayAddress.Equals(changes.ExistingGatewayAddress))
+                return true;
+
+            if (!changes.DomainName.Equals(changes.ExistingDomainName))
+                return true;
+
+            if (!changes.TFTPBootFile.Equals(changes.ExistingTFTPBootFile))
+                return true;
+
             if (
                 (changes.ExistingReservations == null) &&
                 (changes.Reservations == null)
@@ -43,7 +52,7 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator.ViewModelExtensions
                 )
                 .Count();
 
-            return countMatches == changes.ExistingReservations.Count;
+            return countMatches != changes.ExistingReservations.Count;
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using LibDHCPServer.VolatilePool;
+﻿using libnetworkutility;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +6,6 @@ using NetPlugAndPlay.Controllers.v0.ViewModels;
 using NetPlugAndPlay.Models;
 using NetPlugAndPlay.PlugAndPlayTools.Cisco;
 using NetPlugAndPlay.Services.DeviceConfigurator;
-using NetPlugAndPlay.Services.DeviceConfigurator.ViewModelExtensions;
 using NetPlugAndPlay.Services.DeviceConfigurator.ViewModels;
 using Serilog;
 using System;
@@ -383,19 +382,22 @@ namespace NetPlugAndPlay.Controllers.v0
                 // Start tracking changes to the DHCP pool for the device
                 var dhcpChanges = new DHCPPoolChangeViewModel
                 {
+                    ExistingGatewayAddress = IPAddress.Parse(existingDevice.IPAddress),
                     ExistingDHCPRelay = existingDevice.DHCPRelay,
                     ExistingPrefix = NetworkPrefix.Parse(existingDevice.Network),
+                    ExistingDomainName = existingDevice.DomainName,
+                    ExistingTFTPBootFile = existingDevice.DHCPTftpBootfile,
                     ExistingReservations = (existingDevice.DHCPExclusions == null) ?
-                        null :
-                        existingDevice.DHCPExclusions
-                            .Select(x =>
-                                new IPRange
-                                {
-                                    Start = IPAddress.Parse(x.Start),
-                                    End = IPAddress.Parse(x.End)
-                                }
-                            )
-                            .ToList()
+                        null : 
+                            existingDevice.DHCPExclusions
+                                .Select(x =>
+                                    new IPRange
+                                    {
+                                        Start = IPAddress.Parse(x.Start),
+                                        End = IPAddress.Parse(x.End)
+                                    }
+                                )
+                                .ToList()
                 };
 
                 Log.Logger.Here().Debug("     Changing network device field values for " + existingDevice.Hostname + "." + existingDevice.DomainName);
@@ -423,8 +425,11 @@ namespace NetPlugAndPlay.Controllers.v0
                 if (device.DHCPRelay.HasValue) { existingDevice.DHCPRelay = device.DHCPRelay.Value; }
                 if (device.DHCPTftpBootfile != null) { existingDevice.DHCPTftpBootfile = device.DHCPTftpBootfile; }
 
+                dhcpChanges.GatewayAddress = IPAddress.Parse(existingDevice.IPAddress);
                 dhcpChanges.DHCPRelay = existingDevice.DHCPRelay;
                 dhcpChanges.Prefix = NetworkPrefix.Parse(existingDevice.Network); // TODO : use the base network from above
+                dhcpChanges.DomainName = existingDevice.DomainName;
+                dhcpChanges.TFTPBootFile = existingDevice.DHCPTftpBootfile;
 
                 if (device.DHCPExclusions != null)
                 {
@@ -622,11 +627,11 @@ namespace NetPlugAndPlay.Controllers.v0
 
                         result.Add("     Qeueued template configuration changes for " + existingDevice.Hostname + "." + existingDevice.DomainName);
                     }
-
-                    uncommitedChanges.NetworkDevices.Add(existingDevice);
-                    dbContext.NetworkDevices.Update(existingDevice);
-                    await DeviceConfigurator.ProcessDHCPChanges(dhcpChanges);
                 }
+
+                uncommitedChanges.NetworkDevices.Add(existingDevice);
+                dbContext.NetworkDevices.Update(existingDevice);
+                await DeviceConfigurator.ProcessDHCPChanges(dhcpChanges);
             }
 
             return result;
