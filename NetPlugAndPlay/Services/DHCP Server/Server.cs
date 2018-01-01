@@ -135,28 +135,20 @@ namespace NetPlugAndPlay.Services.DHCPServer
                     Log.Logger.Here().Debug("TFTP Server : " + tftpServerAddress.ToString());
                     Log.Logger.Here().Debug("Domain name : " + ev.Changes.DomainName);
                     Log.Logger.Here().Debug("Boot filename : " + ev.Changes.TFTPBootFile);
-                    Log.Logger.Here().Debug("Lease duration : " + Server.LeaseDuration.ToString());
-                    Log.Logger.Here().Debug("Request time out : " + Server.RequestTimeOut.ToString());
-                    Log.Logger.Here().Debug("Maximum incomplete requests : " + Server.MaxIncompleteRequests.ToString());
+                    Log.Logger.Here().Debug("Lease duration : " + LeaseDuration.ToString());
+                    Log.Logger.Here().Debug("Request time out : " + RequestTimeOut.ToString());
+                    Log.Logger.Here().Debug("Maximum incomplete requests : " + MaxIncompleteRequests.ToString());
 
                     var pool = new DhcpPool
                     {
                         Network = prefix,
                         DefaultGateways = new List<IPAddress> { ev.Changes.GatewayAddress },
                         Exclusions = (ev.Changes.Reservations == null) ?
-                            new List<IPRange>() :
-                            ev.Changes.Reservations
-                                .Select(x =>
-                                    new IPRange
-                                    {
-                                        Start = x.Start,
-                                        End = x.End
-                                    }
-                                )
-                                .ToList(),
-                        LeaseDuration = Server.LeaseDuration,
-                        RequestTimeOut = Server.RequestTimeOut,
-                        MaxIncompleteRequests = Server.MaxIncompleteRequests,
+                            new IPRanges { } :
+                            ev.Changes.Reservations.Clone(),
+                        LeaseDuration = LeaseDuration,
+                        RequestTimeOut = RequestTimeOut,
+                        MaxIncompleteRequests = MaxIncompleteRequests,
                         PoolOptions = new LeaseOptions
                         {
                             DomainName = ev.Changes.DomainName,
@@ -176,6 +168,11 @@ namespace NetPlugAndPlay.Services.DHCPServer
                     Log.Logger.Here().Information("Modifying DHCP pool for " + ev.Changes.Prefix.ToString());
 
                     var tftpServerAddress = LocalRoutingTable.QueryRoutingInterface(ev.Changes.GatewayAddress);
+
+                    DHCPClients.RemoveKnownClientsForExclusions(
+                        ev.Changes.Reservations,
+                        new List<IPAddress> { ev.Changes.GatewayAddress }
+                    );
 
                     PoolManager.ModifyPool(
                             ev.Changes.Prefix,
@@ -301,7 +298,7 @@ namespace NetPlugAndPlay.Services.DHCPServer
                 {
                     Network = prefix,
                     DefaultGateways = new List<IPAddress> { IPAddress.Parse(device.IPAddress) },
-                    Exclusions = device.DHCPExclusions
+                    Exclusions = new IPRanges(device.DHCPExclusions
                         .Select(x =>
                             new IPRange {
                                 Start = IPAddress.Parse(x.Start),
@@ -309,6 +306,8 @@ namespace NetPlugAndPlay.Services.DHCPServer
                             }
                         )
                         .ToList(),
+                        true
+                    ),
                     LeaseDuration = LeaseDuration,
                     RequestTimeOut = RequestTimeOut,
                     MaxIncompleteRequests = MaxIncompleteRequests,

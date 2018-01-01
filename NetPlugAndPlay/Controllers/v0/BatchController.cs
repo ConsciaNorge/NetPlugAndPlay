@@ -388,7 +388,8 @@ namespace NetPlugAndPlay.Controllers.v0
                     ExistingDomainName = existingDevice.DomainName,
                     ExistingTFTPBootFile = existingDevice.DHCPTftpBootfile,
                     ExistingReservations = (existingDevice.DHCPExclusions == null) ?
-                        null : 
+                        null :
+                        new IPRanges(
                             existingDevice.DHCPExclusions
                                 .Select(x =>
                                     new IPRange
@@ -397,7 +398,9 @@ namespace NetPlugAndPlay.Controllers.v0
                                         End = IPAddress.Parse(x.End)
                                     }
                                 )
-                                .ToList()
+                                .ToList(),
+                            true
+                        )
                 };
 
                 Log.Logger.Here().Debug("     Changing network device field values for " + existingDevice.Hostname + "." + existingDevice.DomainName);
@@ -500,15 +503,18 @@ namespace NetPlugAndPlay.Controllers.v0
 
                 dhcpChanges.Reservations = (existingDevice.DHCPExclusions == null) ?
                     null :
-                    existingDevice.DHCPExclusions
-                        .Select(x =>
-                            new IPRange
-                            {
-                                Start = IPAddress.Parse(x.Start),
-                                End = IPAddress.Parse(x.End)
-                            }
-                        )
-                        .ToList();
+                    new IPRanges(
+                        existingDevice.DHCPExclusions
+                            .Select(x =>
+                                new IPRange
+                                {
+                                    Start = IPAddress.Parse(x.Start),
+                                    End = IPAddress.Parse(x.End)
+                                }
+                            )
+                            .ToList(),
+                        true
+                    );
 
                 if(device.Template != null)
                 {

@@ -351,7 +351,7 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                 {
                     Network = prefix,
                     DefaultGateways = new List<IPAddress> { IPAddress.Parse(device.IPAddress) },
-                    Exclusions = device.DHCPExclusions
+                    Exclusions = new IPRanges(device.DHCPExclusions
                         .Select(x =>
                             new IPRange
                             {
@@ -360,6 +360,8 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
                             }
                         )
                         .ToList(),
+                        true
+                    ),
                     LeaseDuration = Server.LeaseDuration,
                     RequestTimeOut = Server.RequestTimeOut,
                     MaxIncompleteRequests = Server.MaxIncompleteRequests,

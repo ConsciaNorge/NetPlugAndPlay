@@ -9,12 +9,6 @@
 
 CDPEntries<List<ShowCDPEntryItem>>
  = 	WS? items:CDPEntry* WS? EOF { new List<ShowCDPEntryItem>(items) }
-    
-CLICommand
-     = Line* 'show cdp entry *'
-    
-Line
-    = [^n]*[\n]
 
 CDPEntry<ShowCDPEntryItem>
  = EntryStart 

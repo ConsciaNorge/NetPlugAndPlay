@@ -1,4 +1,5 @@
 ﻿using LibDHCPServer;
+using libnetworkutility;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -36,7 +37,20 @@ namespace NetPlugAndPlay.Services.DHCPServer
         {
             DHCPClient result = null;
             lock (KnownClients)
+            {
                 result = KnownClients.Where(x => x.ClientId.Equals(request.ClientId)).FirstOrDefault();
+
+                if (result != null)
+                {
+                    var now = DateTimeOffset.Now;
+
+                    if (result.DHCPLease.Expires <= now || result.DHCPLease.TimesOut <= now)
+                    {
+                        KnownClients.Remove(result);
+                        return null;
+                    }
+                }
+            }
 
             return result;
         }
@@ -71,6 +85,22 @@ namespace NetPlugAndPlay.Services.DHCPServer
         public static void Add(DHCPClient client)
         {
             lock (KnownClients) KnownClients.Add(client);
+        }
+
+        public static void RemoveKnownClientsForExclusions(IPRanges exclusions, List<IPAddress> Gateways)
+        {
+            lock(KnownClients)
+            {
+                var excludedItems = KnownClients
+                    .Where(x =>
+                        exclusions.Contains(x.DHCPLease.Address) ||
+                        Gateways.Contains(x.DHCPLease.Address)
+                    )
+                    .ToList();
+
+                foreach (var item in excludedItems)
+                    KnownClients.Remove(item);
+            }
         }
     }
 }
