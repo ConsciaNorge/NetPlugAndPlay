@@ -192,8 +192,5 @@ Number<int>
 Comma
  = ','   
 
-CiscoPrompt
- = [A-Za-z][A-Za-z0-9-_]*[#>]
-
 EOF 
  = !.

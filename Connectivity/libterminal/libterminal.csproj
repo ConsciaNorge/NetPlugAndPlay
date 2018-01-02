@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Pegasus\Pegasus.Common.Core2\Pegasus.Common.Core2.csproj" />
-    <ProjectReference Include="..\SSH.NET\src\Renci.SshNet.NETCore2\Renci.SshNet.NETCore2.csproj" />
+    <ProjectReference Include="..\SSH.NET\src\Renci.SshNet.NETCore\Renci.SshNet.NETCore.csproj" />
   </ItemGroup>
 
   <ItemGroup>

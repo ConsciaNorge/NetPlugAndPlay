@@ -43,7 +43,7 @@
     <ProjectReference Include="..\Connectivity\libterminal\libterminal.csproj" />
     <ProjectReference Include="..\Connectivity\Pegasus\Pegasus.Common.Core2\Pegasus.Common.Core2.csproj" />
     <ProjectReference Include="..\LibDHCPServer\LibDHCPServer\LibDHCPServer.csproj" />
-    <ProjectReference Include="..\NVelocity\NVelocity.csproj" />
+    <ProjectReference Include="..\NVelocity\NVelocity\NVelocity.csproj" />
     <ProjectReference Include="..\Tftp.Net\Tftp.Net.csproj" />
   </ItemGroup>
 
