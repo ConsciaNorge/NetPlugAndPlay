@@ -35,11 +35,17 @@
     <None Remove="ClientApp\app\components\networkdevices\networkdevices.component.ts" />
     <None Remove="ClientApp\app\model\networkdevice.ts" />
     <None Remove="ClientApp\app\model\networkdevicelink.ts" />
+    <None Remove="ClientApp\app\model\networkdevicereport.ts" />
+    <None Remove="ClientApp\app\model\networkdevicetemplate.ts" />
     <None Remove="ClientApp\app\model\networkdevicetype.ts" />
     <None Remove="ClientApp\app\model\networkinterface.ts" />
+    <None Remove="ClientApp\app\model\template.ts" />
+    <None Remove="ClientApp\app\model\templateconfiguration.ts" />
+    <None Remove="ClientApp\app\model\templateproperty.ts" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Connectivity\CiscoCLIParsers\CiscoCLIParsers\CiscoCLIParsers.csproj" />
     <ProjectReference Include="..\Connectivity\libterminal\libterminal.csproj" />
     <ProjectReference Include="..\LibDHCPServer\LibDHCPServer\LibDHCPServer.csproj" />
     <ProjectReference Include="..\NVelocity\NVelocity\NVelocity.csproj" />
@@ -50,8 +56,13 @@
     <TypeScriptCompile Include="ClientApp\app\components\networkdevices\networkdevices.component.ts" />
     <TypeScriptCompile Include="ClientApp\app\model\networkdevice.ts" />
     <TypeScriptCompile Include="ClientApp\app\model\networkdevicelink.ts" />
+    <TypeScriptCompile Include="ClientApp\app\model\networkdevicereport.ts" />
+    <TypeScriptCompile Include="ClientApp\app\model\networkdevicetemplate.ts" />
     <TypeScriptCompile Include="ClientApp\app\model\networkdevicetype.ts" />
     <TypeScriptCompile Include="ClientApp\app\model\networkinterface.ts" />
+    <TypeScriptCompile Include="ClientApp\app\model\template.ts" />
+    <TypeScriptCompile Include="ClientApp\app\model\templateconfiguration.ts" />
+    <TypeScriptCompile Include="ClientApp\app\model\templateproperty.ts" />
   </ItemGroup>
 
   <Target Name="DebugRunWebpack" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('wwwroot\dist') ">

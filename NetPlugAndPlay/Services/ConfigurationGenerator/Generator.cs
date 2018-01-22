@@ -51,9 +51,8 @@ namespace NetPlugAndPlay.Services.ConfigurationGenerator
                 context.Put(prop.Name, prop.Value);
 
             context.Put("ipAddress", ipAddress);
-            context.Put("hostname", string.Join("", address.GetAddressBytes().Select(x => x.ToString("X2")).ToList()));
-            if (relayDevice != null)
-                context.Put("domainName", relayDevice.DomainName);
+            context.Put("hostname", templateConfig.NetworkDevice.Hostname);
+            context.Put("domainName", templateConfig.NetworkDevice.DomainName);
             context.Put("tftpServer", address.GetSourceIP());
             context.Put("dhcpServer", address.GetSourceIP());
             context.Put("syslogServer", address.GetSourceIP());
@@ -110,6 +109,7 @@ namespace NetPlugAndPlay.Services.ConfigurationGenerator
             context.Put("automationServer", thisServerIP.ToString());
             context.Put("dhcpServer", thisServerIP.ToString());
             context.Put("syslogServer", thisServerIP.ToString());
+            context.Put("deviceReadyMessage", DeviceConfigurator.DeviceConfigurator.DeviceConfiguredLogMessage);
 
             context.Put("esc", new NVelocityRuntime.CiscoEsc());
 

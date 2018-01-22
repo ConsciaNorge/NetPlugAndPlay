@@ -165,7 +165,7 @@ Function Get-NetworkDeviceTypeChanges
 
     # Get the currently configured network device types
     # TODO : If this list gets too big, it could be memory and bandwidth heavy.
-    $uri = [Uri]::new($baseUri, '/api/v0/plugandplay/networkdevicetype')
+    $uri = [Uri]::new($baseUri, 'api/v0/plugandplay/networkdevicetype')
     $existingDeviceTypes = Invoke-RestMethod -Method Get -Uri $uri.ToString() -UseBasicParsing
 
     # Identify the items which need to be added to the system
@@ -251,7 +251,7 @@ Function Get-TemplateChanges
 
     # Get the currently configured templates
     # TODO : If this list gets too big, it could be memory and bandwidth heavy.
-    $uri = [Uri]::new($baseUri, '/api/v0/plugandplay/template')
+    $uri = [Uri]::new($baseUri, 'api/v0/plugandplay/template')
     $existingTemplates = Invoke-RestMethod -Method Get -Uri $uri.ToString() -UseBasicParsing
 
     # Identify the items which need to be added to the system
@@ -716,7 +716,7 @@ Function Get-NetworkDeviceChanges
 
     # Get the currently configured devices
     # TODO : If this list gets too big, it could be memory and bandwidth heavy.
-    $uri = [Uri]::new($baseUri, '/api/v0/plugandplay/networkdevice/report')
+    $uri = [Uri]::new($baseUri, 'api/v0/plugandplay/networkdevice/report')
     $existingDevices = Invoke-RestMethod -Method Get -Uri $uri.ToString() -UseBasicParsing
 
     # Identify the items which need to be added to the system
@@ -785,7 +785,7 @@ Function Get-ConnectionChanges
 
     # Get the currently configured connections
     # TODO : If this list gets too big, it could be memory and bandwidth heavy.
-    $uri = [Uri]::new($baseUri, '/api/v0/plugandplay/networkdevice/uplinks')
+    $uri = [Uri]::new($baseUri, 'api/v0/plugandplay/networkdevice/uplinks')
     $existingConnections = Invoke-RestMethod -Method Get -Uri $uri.ToString() -UseBasicParsing
 
     # Identify the items which need to be added to the system
@@ -863,7 +863,7 @@ function Get-TFTPFileChanges
 
     # Get the currently stored TFTP files
     # TODO : If this list gets too big, it could be memory and bandwidth heavy.
-    $uri = [Uri]::new($baseUri, '/api/v0/tftp/files/report')
+    $uri = [Uri]::new($baseUri, 'api/v0/tftp/files/report')
     $existingFiles = Invoke-RestMethod -Method Get -Uri $uri.ToString() -UseBasicParsing
 
     # Identify the items which need to be added to the system
@@ -1934,7 +1934,7 @@ function Update-DRC-ExtendedConnectionChanges
     # Get a list of connections that are effected by network device type changes (but not interface changes)
     $requestSplat = @{
         UseBasicParsing = $true
-        Uri = ([Uri]::new($apiBaseUri, '/api/v0/plugandplay/networkdevice/uplinks/bydeviceids')).ToString()
+        Uri = ([Uri]::new($apiBaseUri, 'api/v0/plugandplay/networkdevice/uplinks/bydeviceids')).ToString()
         Method = 'Post'
         ContentType = 'application/json'
         Body = ($effectedDeviceGuids | ConvertTo-Json)

@@ -8,6 +8,14 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator.ViewModelExtensions
 {
     public static class DHCPPoolChangeViewModelExtensions
     {
+        private static bool StringsEqual(string left, string right)
+        {
+            return (
+                    (string.IsNullOrEmpty(left) && string.IsNullOrEmpty(right)) ||
+                    (!string.IsNullOrEmpty(left) && !string.IsNullOrEmpty(right) && left.Equals(right))
+                );
+        }
+
         public static bool Changed(this DHCPPoolChangeViewModel changes)
         {
             if (changes.DHCPRelay != changes.ExistingDHCPRelay)
@@ -19,10 +27,10 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator.ViewModelExtensions
             if (!changes.GatewayAddress.Equals(changes.ExistingGatewayAddress))
                 return true;
 
-            if (!changes.DomainName.Equals(changes.ExistingDomainName))
+            if (!StringsEqual(changes.DomainName, changes.ExistingDomainName))
                 return true;
 
-            if (!changes.TFTPBootFile.Equals(changes.ExistingTFTPBootFile))
+            if (!StringsEqual(changes.TFTPBootFile, changes.ExistingTFTPBootFile))
                 return true;
 
             if (

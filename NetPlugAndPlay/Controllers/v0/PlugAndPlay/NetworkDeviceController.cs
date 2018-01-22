@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using libnetworkutility;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NetPlugAndPlay.Models;
 using NetPlugAndPlay.Services.DeviceConfigurator;
@@ -7,6 +8,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -35,6 +37,7 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
             return await dbContext.NetworkDevices
                 .Include("DeviceType")
                 .Include("Uplinks")
+                .Include("DHCPExclusions")
                 .ToListAsync();
         }
 
@@ -221,6 +224,28 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
             return new NoContentResult();
         }
 
+        public class TestConfigurationParameterViewModel
+        {
+            [JsonProperty("name")]
+            public string Name { get; set; }
+            [JsonProperty("value")]
+            public string Value { get; set; }
+        }
+
+        public class TestConfigurationViewModel
+        {
+            [JsonProperty("hostname")]
+            public string Hostname { get; set; }
+            [JsonProperty("domainName")]
+            public string DomainName { get; set; }
+            [JsonProperty("templateContent")]
+            public string TemplateContent { get; set; }
+            [JsonProperty("generatedContent")]
+            public string GeneratedContent { get; set; }
+            [JsonProperty("parameters")]
+            public List<TestConfigurationParameterViewModel> Parameters { get; set; }
+        }
+
         [HttpGet("{id}/configuration")]
         public async Task<IActionResult> TestConfiguration(
                 [FromServices] PnPServerContext dbContext,
@@ -229,11 +254,68 @@ namespace NetPlugAndPlay.Controllers.v0.PlugAndPlay
         {
             var item = await dbContext.NetworkDevices.FindAsync(id);
             if (item == null)
+            {
+                Log.Logger.Here().Debug("Failed to find requested network device by id " + id.ToString());
                 return NotFound();
+            }
 
-            var config = await Services.ConfigurationGenerator.Generator.Generate(item.IPAddress, dbContext);
+            var templateConfiguration = await dbContext.TemplateConfigurations
+                .Where(x =>
+                    x.NetworkDevice.Id == id
+                )
+                .Include("Template")
+                .Include("Properties")
+                .FirstOrDefaultAsync();
 
-            return new ObjectResult(new { text = config });
+            if (templateConfiguration == null)
+            {
+                Log.Logger.Here().Debug("Failed to find template configuration correlating to network device " + item.Hostname + "." + item.DomainName);
+                return NotFound();
+            }
+
+
+            var generatedContent = await Services.ConfigurationGenerator.Generator.Generate(item.IPAddress, dbContext);
+
+            var parameters = new List<TestConfigurationParameterViewModel>();
+            if(templateConfiguration.Properties != null)
+            {
+                parameters.AddRange(
+                        templateConfiguration.Properties
+                            .Select(x =>
+                                new TestConfigurationParameterViewModel
+                                {
+                                    Name = x.Name,
+                                    Value = x.Value
+                                }
+                            )
+                            .ToList()
+                    );
+            }
+
+            var address = IPAddress.Parse(item.IPAddress);
+
+            parameters.Add(new TestConfigurationParameterViewModel { Name = "ipAddress", Value = item.IPAddress });
+            parameters.Add(new TestConfigurationParameterViewModel { Name = "hostname", Value = item.Hostname });
+            parameters.Add(new TestConfigurationParameterViewModel { Name = "domainName", Value = item.DomainName });
+            parameters.Add(new TestConfigurationParameterViewModel { Name = "tftpServer", Value = address.GetSourceIP().ToString() });
+            parameters.Add(new TestConfigurationParameterViewModel { Name = "dhcpServer", Value = address.GetSourceIP().ToString() });
+            parameters.Add(new TestConfigurationParameterViewModel { Name = "syslogServer", Value = address.GetSourceIP().ToString() });
+            parameters.Add(new TestConfigurationParameterViewModel { Name = "telnetUsername", Value = DeviceConfigurator.TelnetUsername });
+            parameters.Add(new TestConfigurationParameterViewModel { Name = "telnetPassword", Value = DeviceConfigurator.TelnetPassword });
+            parameters.Add(new TestConfigurationParameterViewModel { Name = "enablePassword", Value = DeviceConfigurator.TelnetEnablePassword });
+            parameters.Add(new TestConfigurationParameterViewModel { Name = "deviceReadyMessage", Value = DeviceConfigurator.DeviceConfiguredLogMessage });
+
+
+            var result = new TestConfigurationViewModel
+            {
+                Hostname = item.Hostname,
+                DomainName = item.DomainName,
+                TemplateContent = templateConfiguration.Template.Content,
+                GeneratedContent = generatedContent,
+                Parameters = parameters
+            };
+
+            return new ObjectResult(result);
         }
 
         public class NetworkDeviceTemplateViewModel

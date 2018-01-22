@@ -1,8 +1,7 @@
-﻿using LibDHCPServer.VolatilePool;
+﻿using CiscoCLIParsers;
+using LibDHCPServer.VolatilePool;
 using libnetworkutility;
 using libterminal;
-using libterminal.Helpers.Model;
-using libterminal.Helpers.Parsers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using NetPlugAndPlay.Models;
@@ -83,7 +82,7 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
             return parts[0];
         }
 
-        private async Task<NetworkDevice> MatchCDPEntry(PnPServerContext dbContext, ShowCDPEntryItem cdpEntry)
+        private async Task<NetworkDevice> MatchCDPEntry(PnPServerContext dbContext, CiscoCLIParsers.Model.ShowCDPEntryItem cdpEntry)
         {
             Log.Logger.Here().Information("Attempting to identify what is connected to [" + cdpEntry.DeviceID + "] interface [" + cdpEntry.PortId + "]");
             Log.Logger.Here().Debug("Looking for " + cdpEntry.DeviceID);
@@ -237,17 +236,7 @@ namespace NetPlugAndPlay.Services.DeviceConfigurator
             else
             {
                 Log.Logger.Here().Debug("Received CDP entries\n" + entriesText);
-                var parser = new ShowCDPEntry();
-                List<ShowCDPEntryItem> entries = null;
-                try
-                {
-                    entries = parser.Parse(entriesText);
-                }
-                catch (Exception e)
-                {
-                    Log.Logger.Here().Error(e, "Failed to parse CDP entries");
-                    return false;
-                }
+                var entries = CiscoParser.ParseShowCDPEntries(entriesText);
 
                 if (entries != null)
                 {

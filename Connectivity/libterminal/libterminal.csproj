@@ -6,18 +6,9 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-    <PackageReference Include="Pegasus" Version="4.1.0-alpha0007" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Pegasus\Pegasus.Common\Pegasus.Common.Core.csproj" />
     <ProjectReference Include="..\SSH.NET\src\Renci.SshNet.NETCore\Renci.SshNet.NETCore.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PegGrammar Include="Helpers\Parsers\ShowCDPEntry.peg" />
-  </ItemGroup>
-
-  <Import Project="..\Pegasus\Package\Pegasus.targets" Condition="Exists('..\packages\Pegasus.3.1.2\build\Pegasus.targets')" />
-
 </Project>
