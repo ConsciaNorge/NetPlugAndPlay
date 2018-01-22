@@ -562,11 +562,12 @@ namespace NetPlugAndPlay.Controllers.v0
                     {
                         if(device.Template.Name != null)
                         {
-                            var template = dbContext.Templates
-                                .Where(x =>
-                                    x.Name == device.Template.Name
-                                )
-                                .FirstOrDefault();
+                            var template = uncommitedChanges.GetTemplate(dbContext, device.Template.Name);
+                            //var template = dbContext.Templates
+                            //    .Where(x =>
+                            //        x.Name == device.Template.Name
+                            //    )
+                            //    .FirstOrDefault();
 
                             if (template == null)
                                 throw new Exception("Could not find template " + device.Template.Name + " for " + existingDevice.Hostname + "." + existingDevice.DomainName);
