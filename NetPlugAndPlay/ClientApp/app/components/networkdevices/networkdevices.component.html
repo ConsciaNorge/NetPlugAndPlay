@@ -4,21 +4,204 @@
 
 <p *ngIf="!networkDevices"><em>Loading...</em></p>
 
-<table class='table' *ngIf="networkDevices">
-    <thead>
-        <tr>
-            <th>Hostname</th>
-            <th>Domain name</th>
-            <th>IP Address</th>
-            <th>Device type</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let networkDevice of networkDevices">
-            <td>{{ networkDevice.hostname}}</td>
-            <td>{{ networkDevice.domainName}}</td>
-            <td>{{ networkDevice.ipAddress}}</td>
-            <td>{{ networkDevice.deviceType.name}}</td>
-        </tr>
-    </tbody>
-</table>
+<div class="panel panel-primary" *ngFor="let networkDevice of networkDevices">
+    <div class="panel-heading">
+        {{networkDevice.hostname}}.{{networkDevice.domainName}}
+    </div>
+    <div class="panel-body">
+        <div class="container">
+            <div class="row">
+                <label class="control-label col-sm-2" for="guid">GUID</label>
+                <div class="col-sm-10 form-control" id="guid">
+                    {{networkDevice.id}}
+                </div>
+            </div>
+            <div class="row">
+                <label class="control-label col-sm-2" for="hostname">Hostname</label>
+                <div class="col-sm-10 form-control" id="hostname">
+                    {{networkDevice.hostname}}
+                </div>
+            </div>
+            <div class="row">
+                <label class="control-label col-sm-2" for="domainName">Domain name</label>
+                <div class="col-sm-10 form-control" id="domainName">
+                    {{networkDevice.domainName}}
+                </div>
+            </div>
+            <div class="row">
+                <label class="control-label col-sm-2" for="description">Description</label>
+                <div class="col-sm-10 form-control" id="description">
+                    {{networkDevice.description}}
+                </div>
+            </div>
+            <div class="row">
+                <label class="control-label col-sm-2" for="ipAddress">IP address</label>
+                <div class="col-sm-10 form-control" id="ipAddress">
+                    {{networkDevice.ipAddress}}
+                </div>
+            </div>
+            <div class="row">
+                <label class="control-label col-sm-2" for="network">Network</label>
+                <div class="col-sm-10 form-control" id="network">
+                    {{networkDevice.network}}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="checkbox">
+                        <label class="control-label"><input type="checkbox" [(ngModel)]="networkDevice.dhcpRelay"> DHCP Relay</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <label class="control-label col-sm-2" for="deviceType">deviceType</label>
+                <div class="col-sm-10 form-control" id="deviceType">
+                    {{networkDevice.deviceType.name}}
+                </div>
+            </div>
+            <ng-container *ngIf="networkDevice.dhcpRelay">
+                <div class="row">
+                    <label class="control-label col-sm-2" for="dhcpBootfile">DHCP bootfile</label>
+                    <div class="col-sm-10 form-control" id="dhcpBootfile">
+                        {{networkDevice.dhcpTftpBootfile}}
+                    </div>
+                </div>
+                <div class="col-sm-offset-2 col-sm-8 row" *ngIf="networkDevice.dhcpExclusions != null && networkDevice.dhcpExclusions.length > 0">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">
+                            DHCP Exclusions
+                        </div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <label class="control-label">Start</label>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="control-label">End</label>
+                                </div>
+                            </div>
+                            <div class="row" *ngFor="let exclusion of networkDevice.dhcpExclusions">
+                                <div class="col-sm-6">
+                                    {{exclusion.start}}
+                                </div>
+                                <div class="col-sm-6">
+                                    {{exclusion.end}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
+            <div class="col-sm-offset-2 col-sm-8 row" *ngIf="networkDevice.uplinks != null && networkDevice.uplinks.length > 0">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        Uplinks
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-sm-4"><label class="control-label">Name</label></div>
+                            <div class="col-sm-4"><label class="control-label">Remote Device</label></div>
+                            <div class="col-sm-4"><label class="control-label">Remote interface</label></div>
+                        </div>
+                        <div class="row" *ngFor="let uplink of networkDevice.uplinks">
+                            <div class="col-sm-4">{{uplink.interfaceIndex}}</div>
+                            <div class="col-sm-4">{{uplink.connectedToDevice.hostname}}.{{uplink.connectedToDevice.domainName}}</div>
+                            <div class="col-sm-4">{{uplink.connectedToInterfaceIndex}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-sm-offset-1 col-sm-10 row" *ngIf="networkDevice.template != null">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        Template
+                        <button type="button" class="btn btn-info" (click)="testTemplate(networkDevice)">Test</button>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <label class="control-label col-sm-2" for="templateName">Name</label>
+                            <div class="col-sm-10 form-control" id="templateName">
+                                {{networkDevice.template.name}}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <label class="control-label col-sm-2" for="templateDescription">Description</label>
+                            <div class="col-sm-10 form-control" id="templateDescription">
+                                {{networkDevice.template.description}}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <label class="control-label col-sm-2" for="templateGuid">GUID</label>
+                            <div class="col-sm-10 form-control" id="templateGuid">
+                                {{networkDevice.template.id}}
+                            </div>
+                        </div>
+                        <div class="col-sm-offset-1 col-sm-10 row" *ngIf="networkDevice.template.parameters != null && networkDevice.template.parameters.length > 0">
+                            <div class="panel panel-primary">
+                                <div class="panel-heading">
+                                    Parameters
+                                </div>
+                                <div class="panel-body">
+                                    <div class="row">
+                                        <div class="col-sm-3"><label class="control-label">Name</label></div>
+                                        <div class="col-sm-4"><label class="control-label">Value</label></div>
+                                        <div class="col-sm-5"><label class="control-label">GUID</label></div>
+                                    </div>
+                                    <div class="row" *ngFor="let parameter of networkDevice.template.parameters">
+                                        <div class="col-sm-3">{{parameter.name}}</div>
+                                        <div class="col-sm-4">{{parameter.value}}</div>
+                                        <div class="col-sm-5">{{parameter.id}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-primary" *ngIf="previewTemplate != null">
+    <div class="panel-heading">
+        Configuration for {{previewTemplate.hostname}}.{{previewTemplate.domainName}}
+    </div>
+    <div class="panel-body">
+        <div class="container">
+                <div class="container col-sm-12">
+                    <ul class="nav nav-tabs">
+                        <li class="active">
+                            <a href="#1" data-toggle="tab">Generated</a>
+                        </li>
+                        <li>
+                            <a href="#2" data-toggle="tab">Original template</a>
+                        </li>
+                        <li>
+                            <a href="#3" data-toggle="tab">Side-By-Side</a>
+                        </li>
+                        <li>
+                            <a href="#4" data-toggle="tab">Parameters</a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content ">
+                        <div class="tab-pane active" id="1">
+                            <pre>{{previewTemplate.generatedContent}}</pre>
+                        </div>
+                        <div class="tab-pane" id="2">
+                            <pre>{{previewTemplate.templateContent}}</pre>
+                        </div>
+                        <div class="tab-pane" id="3">
+                            <div class="col-sm-6"><pre>{{previewTemplate.generatedContent}}</pre></div>
+                            <div class="col-sm-6"><pre>{{previewTemplate.templateContent}}</pre></div>
+                        </div>
+                        <div class="tab-pane" id="4">
+                            <h3>add clearfix to tab-content (see the css)</h3>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </div>
+</div>
