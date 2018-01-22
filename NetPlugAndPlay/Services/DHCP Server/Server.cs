@@ -339,7 +339,7 @@ namespace NetPlugAndPlay.Services.DHCPServer
             var clientIDFilter = new Regex(ClientIDFilter);
             if(!clientIDFilter.IsMatch(request.ClientId.ToString()))
             {
-                Log.Logger.Here().Information("DHCP packet received from " + remoteEndPoint.ToString() + " with client ID " + request.ClientId.ToString() + " but does not match filter \"" + ClientIDFilter + "\". Ignoring");
+                //Log.Logger.Here().Information("DHCP packet received from " + remoteEndPoint.ToString() + " with client ID " + request.ClientId.ToString() + " but does not match filter \"" + ClientIDFilter + "\". Ignoring");
                 return null;
             }
 
@@ -499,7 +499,7 @@ namespace NetPlugAndPlay.Services.DHCPServer
                 var lease = GenerateLeaseFromPool(request, localEndPoint, remoteEndPoint);
                 if (lease == null)
                 {
-                    Log.Logger.Here().Warning("Failed to generate a lease from a pool for " + request.ClientId.ToString());
+                    //Log.Logger.Here().Warning("Failed to generate a lease from a pool for " + request.ClientId.ToString());
                     return null;
                 }
 
