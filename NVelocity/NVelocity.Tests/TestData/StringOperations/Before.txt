@@ -1,2 +1,0 @@
-﻿#set ($message = "Toot Toot praises the pizza lord")
-$message is $message.Length characters long
