@@ -1,0 +1,27 @@
+[submodule "LibDHCPServer"]
+	path = LibDHCPServer
+	url = https://github.com/darrenstarr/LibDHCPServer.git
+
+[submodule "libnetworkutility"]
+    path = libnetworkutility
+    url = https://github.com/darrenstarr/libnetworkutility.git
+
+[submodule "NVelocity"]
+    path = NVelocity
+    url = https://github.com/darrenstarr/NVelocity.git
+
+[submodule "Pegasus"]
+    path = Connectivity/Pegasus
+    url = https://github.com/darrenstarr/Pegasus.git
+
+[submodule "SSH.NET"]
+    path = Connectivity/SSH.NET
+    url = https://github.com/darrenstarr/SSH.NET.git
+
+[submodule "tftp.net"]
+	path = Connectivity/tftp.net
+	url = https://github.com/darrenstarr/tftp.net.git
+
+[submodule "CiscoCLIParsers"]
+	path = Connectivity/CiscoCLIParsers
+	url = https://github.com/darrenstarr/CiscoCLIParsers.git
