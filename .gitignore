@@ -44,6 +44,9 @@ project.lock.json
 project.fragment.lock.json
 artifacts/
 
+SampleData.production
+
+*.zip
 *_i.c
 *_p.c
 *_i.h
