@@ -47,9 +47,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Connectivity\CiscoCLIParsers\CiscoCLIParsers\CiscoCLIParsers.csproj" />
     <ProjectReference Include="..\Connectivity\libterminal\libterminal.csproj" />
+    <ProjectReference Include="..\Connectivity\tftp.net\Tftp.Net\Tftp.Net.core.csproj" />
     <ProjectReference Include="..\LibDHCPServer\LibDHCPServer\LibDHCPServer.csproj" />
     <ProjectReference Include="..\NVelocity\NVelocity\NVelocity.csproj" />
-    <ProjectReference Include="..\Tftp.Net\Tftp.Net.csproj" />
   </ItemGroup>
 
   <ItemGroup>
