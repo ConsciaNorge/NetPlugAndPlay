@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2010
+VisualStudioVersion = 15.0.27130.2024
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetPlugAndPlay", "NetPlugAndPlay\NetPlugAndPlay.csproj", "{AECC66DE-B3DA-4D5E-B1B4-EEAB6F59CCEF}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tftp.Net", "Tftp.Net\Tftp.Net.csproj", "{E243002C-9B36-448A-A77F-B3639093B8D0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{90554281-0E2C-466F-A969-FB1122ADA233}"
 	ProjectSection(SolutionItems) = preProject
@@ -30,6 +28,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pegasus.Common.Core", "Conn
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CiscoCLIParsers", "Connectivity\CiscoCLIParsers\CiscoCLIParsers\CiscoCLIParsers.csproj", "{B33A3101-E0EC-4C0A-BC0D-6CE57363C8A7}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tftp.Net.core", "Connectivity\tftp.net\Tftp.Net\Tftp.Net.core.csproj", "{E89EF9FA-251B-4080-9371-606C1A789C23}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		.NETCore2Debug|Any CPU = .NETCore2Debug|Any CPU
@@ -43,12 +43,6 @@ Global
 		{AECC66DE-B3DA-4D5E-B1B4-EEAB6F59CCEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AECC66DE-B3DA-4D5E-B1B4-EEAB6F59CCEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AECC66DE-B3DA-4D5E-B1B4-EEAB6F59CCEF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E243002C-9B36-448A-A77F-B3639093B8D0}..NETCore2Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E243002C-9B36-448A-A77F-B3639093B8D0}..NETCore2Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E243002C-9B36-448A-A77F-B3639093B8D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E243002C-9B36-448A-A77F-B3639093B8D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E243002C-9B36-448A-A77F-B3639093B8D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E243002C-9B36-448A-A77F-B3639093B8D0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{41C496DA-B873-4BDB-909E-EBDC6A18F440}..NETCore2Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{41C496DA-B873-4BDB-909E-EBDC6A18F440}..NETCore2Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41C496DA-B873-4BDB-909E-EBDC6A18F440}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -97,6 +91,12 @@ Global
 		{B33A3101-E0EC-4C0A-BC0D-6CE57363C8A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B33A3101-E0EC-4C0A-BC0D-6CE57363C8A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B33A3101-E0EC-4C0A-BC0D-6CE57363C8A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E89EF9FA-251B-4080-9371-606C1A789C23}..NETCore2Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E89EF9FA-251B-4080-9371-606C1A789C23}..NETCore2Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E89EF9FA-251B-4080-9371-606C1A789C23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E89EF9FA-251B-4080-9371-606C1A789C23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E89EF9FA-251B-4080-9371-606C1A789C23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E89EF9FA-251B-4080-9371-606C1A789C23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -107,6 +107,7 @@ Global
 		{DAF78FB9-03BD-4252-B159-4513A09DCBB6} = {A320C9A3-906F-4125-8848-1A8E1F98A620}
 		{288470EF-92A9-48B0-A194-34E0B4FB377B} = {A320C9A3-906F-4125-8848-1A8E1F98A620}
 		{B33A3101-E0EC-4C0A-BC0D-6CE57363C8A7} = {A320C9A3-906F-4125-8848-1A8E1F98A620}
+		{E89EF9FA-251B-4080-9371-606C1A789C23} = {A320C9A3-906F-4125-8848-1A8E1F98A620}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D6DA9E7B-EC8D-44EA-959A-8820AAF4DDB2}
