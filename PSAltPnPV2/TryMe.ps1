@@ -618,7 +618,7 @@ Function Get-NetworkDeviceChangeList
     if(-not ($ExistingDevice.hostname -ilike $Device.hostname)) { $fieldChanged += 'hostname' }
     if(-not ($ExistingDevice.domainName -ilike $Device.domainName)) { $fieldChanged += 'domainName' }
     if(-not ($ExistingDevice.deviceType.name -ilike $Device.deviceType)) { $fieldChanged += 'deviceType' }
-    if(-not ($ExistingDevice.network -ilike (Get-NetworkFromNetworkPrefix -Prefix $Device.ipAddress))) { $fieldChanged += 'network' }
+    #if(-not ($ExistingDevice.network -ilike (Get-NetworkFromNetworkPrefix -Prefix $Device.ipAddress))) { $fieldChanged += 'network' }
     if(-not ($ExistingDevice.ipAddress -ilike (Get-NetworkPrefixParts -Prefix $Device.ipAddress)[0])) { $fieldChanged += 'ipAddress' }
     if(-not ($ExistingDevice.description -ilike $Device.description)) { $fieldChanged += 'description' }
     if(-not ($ExistingDevice.dhcpRelay -eq (Get-BoolOrFalse -Value $Device.dhcpRelay))) { $fieldChanged += 'dhcpRelay' }
@@ -708,6 +708,12 @@ Function Get-NetworkDeviceChanges
                     name = 'subnetMask'
                     value = $subnetMask
                 }
+
+                #$network = Get-NetworkFromNetworkPrefix -Prefix $_.ipAddress
+                #$parameters += @{
+                #    name = 'network'
+                #    value = $network                
+                #}
             }
 
             $_.template.parameters = $parameters
@@ -1986,7 +1992,7 @@ $DebugPreference = "Continue"
 $VerbosePreference = "SilentlyContinue"
 
 
-$apiBaseUri = [Uri]::new("http://localhost:27600")
+$apiBaseUri = [Uri]::new("http://localhost:50247")
 $designRoot = Join-Path -Path $PSScriptRoot -ChildPath 'SampleData'
 $designFile = Join-Path -Path $designRoot -ChildPath 'Design.ps1'
 
